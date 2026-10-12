@@ -1561,11 +1561,11 @@ function App() {
     }
   };
 
-  // ⚡ 캐시가 있으면 로그인 전 중복 조회를 생략하고, 로그인 후에는 최신 권한 정보만 1회 동기화
+  // ⚡ 캐시는 즉시 보여주되, 로그인 전이라도 최초 1회는 백그라운드로 최신 데이터를 재조회(SWR)
+  // 로그인 후에는 최신 권한 정보만 1회 동기화
   React.useEffect(() => {
     const token = user?.token || '';
-    const hasCachedEvents = !!localStorage.getItem('cached_card_events');
-    const isFirstAnonymousLoad = !token && !hasCachedEvents && lastFetchedTokenRef.current === '__initial__';
+    const isFirstAnonymousLoad = !token && lastFetchedTokenRef.current === '__initial__';
     const isNewAuthenticatedSession = !!token && lastFetchedTokenRef.current !== token;
     if (!isFirstAnonymousLoad && !isNewAuthenticatedSession) return;
     lastFetchedTokenRef.current = token;

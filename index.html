@@ -820,6 +820,38 @@
 function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwp5HHDFNuWuwkgfEh0HHmexwwHfaakqUWTe4Z89MrxyIwiXf5QQLoxLwe_096-NRr2zw/exec";
 const UNAVAILABLE_PERIOD_LABEL = "예약 불가 기간";
+const NOTICE_SEVERITY_OPTIONS = [{
+  key: 'info',
+  label: '안내',
+  icon: '📘',
+  classes: 'bg-sky-50 dark:bg-sky-900/30 border-sky-200 dark:border-sky-800 text-sky-800 dark:text-sky-200',
+  pickerActive: 'bg-sky-600 text-white border-sky-600',
+  pickerIdle: 'bg-white dark:bg-slate-700 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-700'
+}, {
+  key: 'warning',
+  label: '주의',
+  icon: '⚠️',
+  classes: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200',
+  pickerActive: 'bg-amber-600 text-white border-amber-600',
+  pickerIdle: 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700'
+}, {
+  key: 'danger',
+  label: '긴급',
+  icon: '🚨',
+  classes: 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200',
+  pickerActive: 'bg-red-600 text-white border-red-600',
+  pickerIdle: 'bg-white dark:bg-slate-700 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700'
+}];
+const getNoticeSeverityStyle = severity => NOTICE_SEVERITY_OPTIONS.find(o => o.key === severity) || NOTICE_SEVERITY_OPTIONS[0];
+// ⚡ 안내사항 본문에서 줄바꿈과 **굵게** 강조만 지원하는 가벼운 서식 렌더러
+const renderNoticeText = text => String(text || '').split('\n').map((line, li) => /*#__PURE__*/React.createElement(React.Fragment, {
+  key: li
+}, li > 0 && /*#__PURE__*/React.createElement("br", null), line.split(/(\*\*[^*]+\*\*)/g).map((seg, si) => {
+  const m = seg.match(/^\*\*([^*]+)\*\*$/);
+  return m ? /*#__PURE__*/React.createElement("strong", {
+    key: si
+  }, m[1]) : seg;
+})));
 // [최적화] 불필요한 date-holidays 외부 라이브러리 제거 (FALLBACK_HOLIDAYS 및 서버 데이터로 완벽 대응)
 const FALLBACK_HOLIDAYS = {
   "2026-01-01": "신정",
@@ -1215,10 +1247,16 @@ function App() {
   });
   const [notice, setNotice] = React.useState(() => {
     try {
-      return localStorage.getItem('cached_card_notice') || '';
+      const cached = localStorage.getItem('cached_card_notice');
+      return cached ? JSON.parse(cached) : { text: '', severity: 'info' };
     } catch (e) {
-      return '';
+      return { text: '', severity: 'info' };
     }
+  });
+  const [showAnnouncementEditor, setShowAnnouncementEditor] = React.useState(false);
+  const [announcementDraft, setAnnouncementDraft] = React.useState({
+    text: '',
+    severity: 'info'
   });
   const [isFetchingStatus, setIsFetchingStatus] = React.useState(() => {
     const hasCache = !!localStorage.getItem('cached_card_events');
@@ -1303,7 +1341,7 @@ function App() {
   const confirm = message => openFeedbackDialog('confirm', String(message));
   const prompt = message => openFeedbackDialog('prompt', String(message));
   React.useEffect(() => {
-    const hasOpenDialog = showMyBookings || showListModal || showNotice || showForm || showInstruction || feedbackDialog;
+    const hasOpenDialog = showMyBookings || showListModal || showNotice || showForm || showInstruction || showAnnouncementEditor || feedbackDialog;
     if (!hasOpenDialog) return undefined;
     const handleEscape = event => {
       if (event.key !== 'Escape') return;
@@ -1312,11 +1350,12 @@ function App() {
       setShowNotice(false);
       setShowForm(false);
       setShowInstruction(false);
+      setShowAnnouncementEditor(false);
       if (feedbackDialog) closeFeedbackDialog(feedbackDialog.kind === 'prompt' ? null : false);
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [showMyBookings, showListModal, showNotice, showForm, showInstruction, feedbackDialog]);
+  }, [showMyBookings, showListModal, showNotice, showForm, showInstruction, showAnnouncementEditor, feedbackDialog]);
   React.useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -1496,10 +1535,16 @@ function App() {
       try {
         localStorage.setItem('cached_card_holidays', JSON.stringify(holidayMap));
       } catch (e) {}
-      const noticeText = data.notice || '';
-      setNotice(noticeText);
+      const noticeData = data.notice && typeof data.notice === 'object' ? {
+        text: String(data.notice.text || ''),
+        severity: String(data.notice.severity || 'info')
+      } : {
+        text: String(data.notice || ''),
+        severity: 'info'
+      };
+      setNotice(noticeData);
       try {
-        localStorage.setItem('cached_card_notice', noticeText);
+        localStorage.setItem('cached_card_notice', JSON.stringify(noticeData));
       } catch (e) {}
     } catch (e) {
       console.error(e);
@@ -1572,17 +1617,24 @@ function App() {
       setLoading(false);
     }
   };
-  const handleSetAnnouncement = async () => {
-    const input = window.prompt('전체 사용자에게 표시할 안내사항을 입력해주세요.\n(비워두고 확인을 누르면 안내사항이 제거됩니다)', notice);
-    if (input === null) return;
-    const text = input.trim();
+  const openAnnouncementEditor = () => {
+    setAnnouncementDraft({
+      text: notice.text || '',
+      severity: notice.severity || 'info'
+    });
+    setShowAnnouncementEditor(true);
+  };
+  const handleSaveAnnouncement = async clearText => {
+    const text = clearText ? '' : announcementDraft.text.trim();
     setLoading(true);
     try {
       await callApi({
         action: 'SET_NOTICE',
         token: user.token,
-        text
+        text,
+        severity: announcementDraft.severity
       });
+      setShowAnnouncementEditor(false);
       await fetchBookings(true);
       showToast(text ? '안내사항이 등록되었습니다.' : '안내사항이 제거되었습니다.');
     } catch (e) {
@@ -1754,12 +1806,12 @@ function App() {
             lastSelectedRef.current = null;
             return;
           }
-        }
-        if (!isAvailableDate(info.startStr.split('T')[0])) {
-          alert("⚠️ 주말 및 공휴일은 예약할 수 없습니다.");
-          calendarInstanceRef.current.unselect();
-          lastSelectedRef.current = null;
-          return;
+          if (!isAvailableDate(info.startStr.split('T')[0])) {
+            alert("⚠️ 주말 및 공휴일은 예약할 수 없습니다.");
+            calendarInstanceRef.current.unselect();
+            lastSelectedRef.current = null;
+            return;
+          }
         }
         let sDate = info.startStr.split('T')[0];
         let eDate = info.endStr && info.endStr.length === 10 ? new Date(new Date(info.endStr).getTime() - 86400000).toISOString().split('T')[0] : info.endStr.split('T')[0];
@@ -2104,14 +2156,14 @@ function App() {
       onClick: () => window.location.reload()
     }, "\uAC04\uD638\uBD80 \uBC95\uC778\uCE74\uB4DC \uC608\uC57D \uC2DC\uC2A4\uD15C"), /*#__PURE__*/React.createElement("p", {
       className: "text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium"
-    }, "\uC774\uB984\uACFC \uC0AC\uBC88\uC744 \uC785\uB825\uD558\uC5EC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.")), notice && /*#__PURE__*/React.createElement("div", {
+    }, "\uC774\uB984\uACFC \uC0AC\uBC88\uC744 \uC785\uB825\uD558\uC5EC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.")), notice.text && /*#__PURE__*/React.createElement("div", {
       role: "status",
-      className: "mb-5 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-xl px-4 py-3 flex items-start gap-2 text-xs sm:text-sm text-sky-800 dark:text-sky-200"
+      className: `mb-5 rounded-xl border px-4 py-3 flex items-start gap-2 text-xs sm:text-sm ${getNoticeSeverityStyle(notice.severity).classes}`
     }, /*#__PURE__*/React.createElement("span", {
       className: "shrink-0"
-    }, "\uD83D\uDCE2"), /*#__PURE__*/React.createElement("span", {
-      className: "flex-1 whitespace-pre-line break-words font-medium"
-    }, notice)), /*#__PURE__*/React.createElement("div", {
+    }, getNoticeSeverityStyle(notice.severity).icon), /*#__PURE__*/React.createElement("span", {
+      className: "flex-1 break-words font-medium leading-relaxed"
+    }, renderNoticeText(notice.text))), /*#__PURE__*/React.createElement("div", {
       className: "mb-6 bg-slate-50/80 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-3 min-h-[64px] flex flex-col justify-center transition-all select-none"
     }, isFetchingStatus ? /*#__PURE__*/React.createElement("div", {
       className: "flex flex-col items-center justify-center py-1"
@@ -2292,7 +2344,7 @@ function App() {
     className: "px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] sm:text-[11px] font-bold"
   }, "\uAD00\uB9AC\uC790"), user.isAdmin && /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815",
-    onClick: handleSetAnnouncement,
+    onClick: openAnnouncementEditor,
     className: "p-1.5 sm:px-3 sm:py-2 bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95",
     title: "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815"
   }, "\uD83D\uDCE2", /*#__PURE__*/React.createElement("span", {
@@ -2337,14 +2389,18 @@ function App() {
     d: "M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
   })), /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
-  }, "\uB85C\uADF8\uC544\uC6C3"))))), notice && /*#__PURE__*/React.createElement("div", {
+  }, "\uB85C\uADF8\uC544\uC6C3"))))), notice.text && /*#__PURE__*/React.createElement("div", {
     role: "status",
-    className: "shrink-0 bg-sky-50 dark:bg-sky-900/30 border-b border-sky-200 dark:border-sky-800 px-4 py-2 flex items-start gap-2 text-xs sm:text-sm text-sky-800 dark:text-sky-200"
+    className: `shrink-0 border-b px-4 py-2 flex items-start gap-2 text-xs sm:text-sm ${getNoticeSeverityStyle(notice.severity).classes}`
   }, /*#__PURE__*/React.createElement("span", {
     className: "shrink-0"
-  }, "\uD83D\uDCE2"), /*#__PURE__*/React.createElement("span", {
-    className: "flex-1 whitespace-pre-line break-words font-medium"
-  }, notice)), /*#__PURE__*/React.createElement("main", {
+  }, getNoticeSeverityStyle(notice.severity).icon), /*#__PURE__*/React.createElement("span", {
+    className: "flex-1 break-words font-medium leading-relaxed"
+  }, renderNoticeText(notice.text)), user.isAdmin && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: openAnnouncementEditor,
+    className: "shrink-0 text-[11px] font-semibold underline hover:no-underline"
+  }, "\uC218\uC815")), /*#__PURE__*/React.createElement("main", {
     className: "flex-none sm:flex-1 w-full p-2 sm:p-4 pb-20 sm:pb-4 min-h-0 flex flex-col relative"
   }, /*#__PURE__*/React.createElement("div", {
     className: "md:hidden shrink-0 mb-2 space-y-2"
@@ -2933,7 +2989,61 @@ function App() {
   }, "\u2022 \uBCF8\uC778 \uC608\uC57D \uAC74\uC5D0 \uD55C\uD558\uC5EC \uCDE8\uC18C \uAC00\uB2A5"))), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowInstruction(false),
     className: "w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-xl transition text-sm shadow-md"
-  }, "\uC548\uB0B4\uC0AC\uD56D\uC744 \uD655\uC778\uD588\uC2B5\uB2C8\uB2E4"))), feedbackDialog && /*#__PURE__*/React.createElement("div", {
+  }, "\uC548\uB0B4\uC0AC\uD56D\uC744 \uD655\uC778\uD588\uC2B5\uB2C8\uB2E4"))), showAnnouncementEditor && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "announcement-editor-title",
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]",
+    onClick: () => setShowAnnouncementEditor(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl p-6 border border-slate-100 dark:border-slate-700",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("h3", {
+    id: "announcement-editor-title",
+    className: "text-lg font-bold text-slate-900 dark:text-white mb-4"
+  }, "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815"), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mb-3"
+  }, NOTICE_SEVERITY_OPTIONS.map(opt => /*#__PURE__*/React.createElement("button", {
+    key: opt.key,
+    type: "button",
+    onClick: () => setAnnouncementDraft(prev => ({
+      ...prev,
+      severity: opt.key
+    })),
+    className: `flex-1 px-3 py-2 rounded-lg border text-xs font-bold transition ${announcementDraft.severity === opt.key ? opt.pickerActive : opt.pickerIdle}`
+  }, opt.icon, " ", opt.label))), /*#__PURE__*/React.createElement("textarea", {
+    value: announcementDraft.text,
+    onChange: e => setAnnouncementDraft(prev => ({
+      ...prev,
+      text: e.target.value
+    })),
+    rows: 4,
+    maxLength: 500,
+    placeholder: "\uC804\uCCB4 \uC0AC\uC6A9\uC790\uC5D0\uAC8C \uD45C\uC2DC\uD560 \uC548\uB0B4\uC0AC\uD56D\uC744 \uC785\uB825\uD558\uC138\uC694.\n\uC904\uBC14\uAFC8\uC740 Enter, \uAC15\uC870\uB294 **\uC774\uB807\uAC8C** \uAC10\uC2F8\uBA74 \uAD75\uAC8C \uD45C\uC2DC\uB429\uB2C8\uB2E4.",
+    className: "w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm resize-none focus:outline-none focus:border-blue-600"
+  }), announcementDraft.text.trim() && /*#__PURE__*/React.createElement("div", {
+    className: `mt-3 rounded-xl border px-4 py-3 flex items-start gap-2 text-xs sm:text-sm ${getNoticeSeverityStyle(announcementDraft.severity).classes}`
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "shrink-0"
+  }, getNoticeSeverityStyle(announcementDraft.severity).icon), /*#__PURE__*/React.createElement("span", {
+    className: "flex-1 break-words font-medium leading-relaxed"
+  }, renderNoticeText(announcementDraft.text))), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mt-5"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setShowAnnouncementEditor(false),
+    className: "flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 font-medium py-2.5 rounded-xl transition text-sm"
+  }, "\uCDE8\uC18C"), notice.text && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => handleSaveAnnouncement(true),
+    disabled: loading,
+    className: "flex-1 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-medium py-2.5 rounded-xl transition text-sm"
+  }, "\uC548\uB0B4\uC0AC\uD56D \uC0AD\uC81C"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => handleSaveAnnouncement(false),
+    disabled: loading || !announcementDraft.text.trim(),
+    className: "flex-[2] bg-blue-700 hover:bg-blue-800 disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-xl transition text-sm"
+  }, loading ? '\uC800\uC7A5 \uC911...' : '\uC800\uC7A5')))), feedbackDialog && /*#__PURE__*/React.createElement("div", {
     role: "dialog",
     "aria-modal": "true",
     "aria-labelledby": "feedback-dialog-title",

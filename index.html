@@ -1,0 +1,3054 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DNS > Card-Portal</title>
+
+    <!-- ⚡ 성능 최적화를 위한 CDN Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://unpkg.com">
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'media',
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/ko.global.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* -------------------------------------------------------------
+           1. 로딩 인디케이터 스타일 (Uiverse 기반 - 테마 블루 튜닝)
+        ------------------------------------------------------------- */
+        .typing-indicator {
+            width: 60px;
+            height: 28px;
+            position: relative;
+            margin: 0 auto;
+            z-index: 4;
+        }
+
+        .typing-circle {
+            width: 8px;
+            height: 8px;
+            position: absolute;
+            border-radius: 50%;
+            background-color: #2563eb;
+            left: 15%;
+            transform-origin: 50%;
+            animation: typing-circle7124 0.5s alternate infinite ease;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .typing-circle {
+                background-color: #60a5fa;
+            }
+        }
+
+        @keyframes typing-circle7124 {
+            0% {
+                top: 18px;
+                height: 5px;
+                border-radius: 50px 50px 25px 25px;
+                transform: scaleX(1.7);
+            }
+            40% {
+                height: 8px;
+                border-radius: 50%;
+                transform: scaleX(1);
+            }
+            100% {
+                top: 0%;
+            }
+        }
+
+        .typing-circle:nth-child(2) {
+            left: 45%;
+            animation-delay: 0.2s;
+        }
+
+        .typing-circle:nth-child(3) {
+            left: auto;
+            right: 15%;
+            animation-delay: 0.3s;
+        }
+
+        .typing-shadow {
+            width: 6px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: rgba(37, 99, 235, 0.25);
+            position: absolute;
+            top: 26px;
+            transform-origin: 50%;
+            z-index: 3;
+            left: 15%;
+            filter: blur(1px);
+            animation: typing-shadow046 0.5s alternate infinite ease;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .typing-shadow {
+                background-color: rgba(96, 165, 250, 0.3);
+            }
+        }
+
+        @keyframes typing-shadow046 {
+            0% {
+                transform: scaleX(1.5);
+            }
+            40% {
+                transform: scaleX(1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scaleX(0.2);
+                opacity: 0.4;
+            }
+        }
+
+        .typing-shadow:nth-child(4) {
+            left: 45%;
+            animation-delay: 0.2s;
+        }
+
+        .typing-shadow:nth-child(5) {
+            left: auto;
+            right: 15%;
+            animation-delay: 0.3s;
+        }
+
+        /* -------------------------------------------------------------
+           3. 세련된 모던 캘린더 UI 스타일 (Apple/Notion 스타일)
+        ------------------------------------------------------------- */
+        .fc {
+            --fc-border-color: #f1f5f9;
+            --fc-today-bg-color: transparent;
+            --fc-neutral-bg-color: transparent;
+            background: #ffffff;
+            padding: 0.85rem 1rem;
+            border-radius: 1.25rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+            height: 100%;
+        }
+
+        /* ⚡ 캘린더 내부 스크롤바 투명화 (투박한 스크롤바 제거) */
+        .fc-scroller,
+        .fc-scroller-liquid-absolute {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain;
+        }
+
+        .fc-scroller::-webkit-scrollbar,
+        .fc-scroller-liquid-absolute::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* 툴바 & 타이틀 */
+        .fc .fc-toolbar {
+            margin-bottom: 0.85rem !important;
+            gap: 0.75rem;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.35rem !important;
+            font-weight: 800 !important;
+            color: #0f172a;
+            letter-spacing: -0.025em;
+        }
+
+        /* 툴바 버튼 - 세련된 세그먼트 컨트롤러 스타일 */
+        .fc .fc-button {
+            background-color: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #475569 !important;
+            font-weight: 600 !important;
+            font-size: 0.75rem !important;
+            padding: 0.4rem 0.8rem !important;
+            border-radius: 0.6rem !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .fc .fc-button:hover {
+            background-color: #e2e8f0 !important;
+            color: #0f172a !important;
+            transform: translateY(-1px);
+        }
+
+        .fc .fc-button-active,
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        }
+
+        .fc .fc-button-primary:disabled {
+            opacity: 0.4;
+        }
+
+        /* 요일 헤더 기본 스타일 */
+        .fc th {
+            padding: 0.5rem 0 !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            color: #64748b !important;
+            border: none !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        /* ⚡ 토요일(파랑) / 일요일(빨강) 요일 헤더 색상 명확화 */
+        .fc th.fc-day-sun,
+        .fc th.fc-day-sun a,
+        .fc-col-header-cell.fc-day-sun {
+            color: #ef4444 !important;
+        }
+
+        .fc th.fc-day-sat,
+        .fc th.fc-day-sat a,
+        .fc-col-header-cell.fc-day-sat {
+            color: #2563eb !important;
+        }
+
+        /* ⚡ 요일별 비대칭 너비: 평일(월~금) 와이드 17%, 주말(토/일) 슬림 7.5% */
+        .fc-col-header-cell.fc-day-sun,
+        .fc-daygrid-day.fc-day-sun,
+        .fc-col-header-cell.fc-day-sat,
+        .fc-daygrid-day.fc-day-sat {
+            width: 7.5% !important;
+            min-width: 36px;
+            background-color: rgba(248, 250, 252, 0.7);
+        }
+
+        .fc-col-header-cell:not(.fc-day-sun):not(.fc-day-sat),
+        .fc-daygrid-day:not(.fc-day-sun):not(.fc-day-sat) {
+            width: 17% !important;
+        }
+
+        /* 날짜 셀 */
+        .fc-theme-standard td, .fc-theme-standard th {
+            border-color: #f1f5f9;
+        }
+
+        .fc-scrollgrid {
+            border-color: #e2e8f0 !important;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .fc-daygrid-day {
+            transition: background-color 0.15s ease;
+        }
+
+        .fc-daygrid-day:hover {
+            background-color: #f8faff;
+        }
+
+        /* ⚡ 날짜 상단 헤더 래퍼 (너비 100% 확장하여 가로 정렬 절대 보장) */
+        .fc .fc-daygrid-day-top {
+            padding: 3px 5px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            float: none !important;
+        }
+
+        .fc .fc-daygrid-day-top a.fc-daygrid-day-number,
+        .fc .fc-daygrid-day-number {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            text-decoration: none !important;
+            float: none !important;
+            box-sizing: border-box !important;
+        }
+
+        .fc-day-header-wrap {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+        }
+
+        .fc-day-num {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 20px !important;
+            height: 20px !important;
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            border-radius: 9999px !important;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+
+        /* ⚡ 공휴일/대체공휴일 세련된 폰트 텍스트 스타일 */
+        .fc-holiday-name {
+            font-size: 0.68rem !important;
+            font-weight: 600 !important;
+            color: #ef4444 !important;
+            white-space: nowrap !important;
+            letter-spacing: -0.025em !important;
+            line-height: 1 !important;
+            display: inline-block !important;
+        }
+
+        /* ⚡ 오늘 날짜(Today) 셀 한눈에 띄는 프리미엄 하이라이트 */
+        .fc-day-today {
+            background-color: rgba(37, 99, 235, 0.07) !important;
+            box-shadow: inset 0 0 0 1.5px rgba(37, 99, 235, 0.45) !important;
+        }
+
+        .fc-day-today .fc-day-num {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5) !important;
+        }
+
+        /* 오늘 표시 미니 라벨 */
+        .fc-today-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            font-size: 0.62rem !important;
+            font-weight: 800 !important;
+            color: #2563eb !important;
+            background-color: rgba(37, 99, 235, 0.12) !important;
+            padding: 1px 4px !important;
+            border-radius: 3px !important;
+            white-space: nowrap !important;
+            line-height: 1.1 !important;
+        }
+
+        /* ⚡ 일요일(빨강) / 토요일(파랑) / 공휴일 날짜 숫자 색상 분리 */
+        .fc-day-sun .fc-day-num,
+        .holiday-day .fc-day-num {
+            color: #ef4444 !important;
+        }
+
+        .fc-day-sat .fc-day-num {
+            color: #2563eb !important;
+        }
+
+        .fc-highlight {
+            background-color: rgba(59, 130, 246, 0.12) !important;
+            box-shadow: inset 0 0 0 2px #3b82f6 !important;
+            border-radius: 6px;
+        }
+
+        /* 모던 이벤트 카드 애니메이션 */
+        .fc-event {
+            margin: 1.5px 2px !important;
+            border-radius: 5px !important;
+            border: none !important;
+            transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+        .fc-event:hover {
+            transform: translateY(-1px) scale(1.01);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            z-index: 20 !important;
+        }
+
+        /* ⚡ "+n개 더보기" 링크 (dayMaxEventRows로 셀 높이가 넘칠 때 노출) */
+        .fc-daygrid-more-link {
+            font-size: 0.68rem !important;
+            font-weight: 700 !important;
+            color: #2563eb !important;
+            margin: 1px 2px !important;
+        }
+
+        .fc-daygrid-more-link:hover {
+            color: #1d4ed8 !important;
+            text-decoration: none !important;
+        }
+
+        .fc-popover {
+            border-radius: 0.85rem !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.12) !important;
+            overflow: hidden;
+        }
+
+        .fc-popover-header {
+            background-color: #f8fafc !important;
+            font-weight: 700 !important;
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        .fc-popover-body {
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0.35rem !important;
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 640px) {
+            .fc-scroller,
+            .fc-scroller-liquid-absolute {
+                overscroll-behavior: auto;
+                touch-action: pan-y;
+                overflow-x: hidden !important;
+            }
+
+            .fc,
+            .fc-view-harness,
+            .fc-scrollgrid,
+            .fc-scrollgrid-section,
+            .fc-scrollgrid-sync-table,
+            .fc-daygrid-body table {
+                max-width: 100% !important;
+                width: 100% !important;
+                overflow-x: hidden !important;
+            }
+
+            .fc-scrollgrid-sync-table,
+            .fc-daygrid-body table {
+                table-layout: fixed !important;
+            }
+
+            .fc-col-header-cell,
+            .fc-daygrid-day,
+            .fc-col-header-cell.fc-day-sun,
+            .fc-daygrid-day.fc-day-sun,
+            .fc-col-header-cell.fc-day-sat,
+            .fc-daygrid-day.fc-day-sat {
+                width: auto !important;
+                min-width: 0 !important;
+            }
+
+            .fc {
+                padding: 0.5rem;
+                border-radius: 0.85rem;
+            }
+
+            .fc .fc-toolbar-title {
+                font-size: 1.05rem !important;
+            }
+
+            .fc .fc-button {
+                padding: 0.3rem 0.55rem !important;
+                font-size: 0.7rem !important;
+            }
+
+            .fc-header-toolbar {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .fc-col-header-cell.fc-day-sun,
+            .fc-daygrid-day.fc-day-sun,
+            .fc-col-header-cell.fc-day-sat,
+            .fc-daygrid-day.fc-day-sat {
+                width: 8% !important;
+                min-width: 28px;
+            }
+        }
+
+        /* 다크모드 캘린더 전용 스타일 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0b1120;
+            }
+
+            .fc {
+                background: #1e293b;
+                border-color: #334155;
+                --fc-border-color: #334155;
+                --fc-page-bg-color: #1e293b;
+                --fc-neutral-text-color: #cbd5e1;
+                --fc-list-event-hover-bg-color: #334155;
+                box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+                color: #f8fafc;
+            }
+
+            .fc-col-header-cell.fc-day-sun,
+            .fc-daygrid-day.fc-day-sun,
+            .fc-col-header-cell.fc-day-sat,
+            .fc-daygrid-day.fc-day-sat {
+                background-color: rgba(15, 23, 42, 0.45);
+            }
+
+            .fc .fc-toolbar-title {
+                color: #f8fafc !important;
+            }
+
+            .fc .fc-button {
+                background-color: #334155 !important;
+                border-color: #475569 !important;
+                color: #e2e8f0 !important;
+            }
+
+            .fc .fc-button:hover {
+                background-color: #475569 !important;
+                color: #ffffff !important;
+            }
+
+            .fc .fc-button-active,
+            .fc .fc-button-primary:not(:disabled).fc-button-active {
+                background-color: #3b82f6 !important;
+                border-color: #3b82f6 !important;
+                color: #ffffff !important;
+                box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+            }
+
+            .fc th {
+                color: #94a3b8 !important;
+                border-bottom-color: #334155 !important;
+            }
+
+            .fc th.fc-day-sun,
+            .fc th.fc-day-sun a,
+            .fc-col-header-cell.fc-day-sun {
+                color: #f87171 !important;
+            }
+
+            .fc th.fc-day-sat,
+            .fc th.fc-day-sat a,
+            .fc-col-header-cell.fc-day-sat {
+                color: #60a5fa !important;
+            }
+
+            .fc-theme-standard td,
+            .fc-theme-standard th {
+                border-color: #334155;
+            }
+
+            .fc-scrollgrid {
+                border-color: #334155 !important;
+            }
+
+            .fc-daygrid-day:hover {
+                background-color: #243247;
+            }
+
+            .fc-day-num {
+                color: #cbd5e1;
+            }
+
+            .fc-day-today {
+                background-color: rgba(59, 130, 246, 0.15) !important;
+                box-shadow: inset 0 0 0 1.5px rgba(59, 130, 246, 0.6) !important;
+            }
+
+            .fc-day-today .fc-day-num {
+                background-color: #3b82f6 !important;
+                color: #ffffff !important;
+            }
+
+            .fc-today-badge {
+                color: #60a5fa !important;
+                background-color: rgba(59, 130, 246, 0.22) !important;
+            }
+
+            .fc-holiday-name {
+                color: #f87171 !important;
+            }
+
+            .fc-day-sun .fc-day-num,
+            .holiday-day .fc-day-num {
+                color: #f87171 !important;
+            }
+
+            .fc-day-sat .fc-day-num {
+                color: #60a5fa !important;
+            }
+
+            .fc-daygrid-more-link {
+                color: #60a5fa !important;
+            }
+
+            .fc-daygrid-more-link:hover {
+                color: #93c5fd !important;
+            }
+
+            .fc-popover {
+                background-color: #1e293b !important;
+                border-color: #334155 !important;
+            }
+
+            .fc-popover-header {
+                background-color: #243247 !important;
+                color: #f8fafc !important;
+            }
+        }
+    </style>
+
+    <link rel="icon" href="tiger_sunglasses.png" type="image/png">
+    <link rel="apple-touch-icon" href="tiger_sunglasses.png">
+
+    <style>
+        /* ⚡ 첫 화면 즉시 로딩을 위한 스켈레톤 UI 애니메이션 */
+        @keyframes skelPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .4; }
+        }
+        .skel-anim {
+            animation: skelPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root">
+        <!-- ⚡ 초기 로딩 스켈레톤 (React 마운트 전 즉시 렌더링) -->
+        <div class="min-h-screen bg-slate-50 dark:bg-slate-900 p-2 sm:p-4 md:p-6 transition-colors duration-300">
+            <div class="max-w-7xl mx-auto space-y-4">
+                <!-- 헤더 스켈레톤 -->
+                <header class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-blue-500/20">
+                            💳
+                        </div>
+                        <div>
+                            <div class="h-5 w-36 bg-slate-200 dark:bg-slate-700 rounded-md skel-anim"></div>
+                            <div class="h-3 w-48 bg-slate-100 dark:bg-slate-800 rounded-md mt-1.5 skel-anim"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="h-9 w-20 bg-slate-200 dark:bg-slate-700 rounded-xl skel-anim"></div>
+                        <div class="h-9 w-24 bg-blue-600/30 rounded-xl skel-anim"></div>
+                    </div>
+                </header>
+
+                <!-- 캘린더 컨테이너 스켈레톤 -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                    <!-- 툴바 -->
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center gap-2">
+                            <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 rounded-lg skel-anim"></div>
+                            <div class="h-8 w-8 bg-slate-200 dark:bg-slate-700 rounded-lg skel-anim"></div>
+                            <div class="h-8 w-8 bg-slate-200 dark:bg-slate-700 rounded-lg skel-anim"></div>
+                        </div>
+                        <div class="h-7 w-32 bg-slate-200 dark:bg-slate-700 rounded-lg skel-anim"></div>
+                        <div class="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded-lg skel-anim"></div>
+                    </div>
+
+                    <!-- 요일 헤더 -->
+                    <div class="grid grid-cols-7 gap-2 text-center py-2">
+                        <div class="h-4 bg-red-100 dark:bg-red-950/40 rounded skel-anim"></div>
+                        <div class="h-4 bg-slate-100 dark:bg-slate-700/40 rounded skel-anim"></div>
+                        <div class="h-4 bg-slate-100 dark:bg-slate-700/40 rounded skel-anim"></div>
+                        <div class="h-4 bg-slate-100 dark:bg-slate-700/40 rounded skel-anim"></div>
+                        <div class="h-4 bg-slate-100 dark:bg-slate-700/40 rounded skel-anim"></div>
+                        <div class="h-4 bg-slate-100 dark:bg-slate-700/40 rounded skel-anim"></div>
+                        <div class="h-4 bg-blue-100 dark:bg-blue-950/40 rounded skel-anim"></div>
+                    </div>
+
+                    <!-- 캘린더 날짜 셀 그리드 -->
+                    <div class="grid grid-cols-7 gap-2 pt-1">
+                        
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            <div class="h-4 w-full bg-blue-100 dark:bg-blue-900/40 rounded skel-anim mt-1"></div>
+                        </div>
+                        <div class="h-16 sm:h-24 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/40 p-1.5 flex flex-col justify-between">
+                            <div class="h-3.5 w-5 bg-slate-200 dark:bg-slate-700 rounded skel-anim"></div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwp5HHDFNuWuwkgfEh0HHmexwwHfaakqUWTe4Z89MrxyIwiXf5QQLoxLwe_096-NRr2zw/exec";
+const UNAVAILABLE_PERIOD_LABEL = "예약 불가 기간";
+// [최적화] 불필요한 date-holidays 외부 라이브러리 제거 (FALLBACK_HOLIDAYS 및 서버 데이터로 완벽 대응)
+const FALLBACK_HOLIDAYS = {
+  "2026-01-01": "신정",
+  "2026-02-16": "설날 연휴",
+  "2026-02-17": "설날",
+  "2026-02-18": "설날 연휴",
+  "2026-03-01": "삼일절",
+  "2026-03-02": "대체공휴일",
+  "2026-05-05": "어린이날",
+  "2026-05-24": "부처님오신날",
+  "2026-05-25": "대체공휴일",
+  "2026-06-03": "지방선거",
+  "2026-06-06": "현충일",
+  "2026-08-15": "광복절",
+  "2026-09-24": "추석 연휴",
+  "2026-09-25": "추석",
+  "2026-09-26": "추석 연휴",
+  "2026-10-03": "개천절",
+  "2026-10-09": "한글날",
+  "2026-12-25": "기독탄신일",
+  "2027-01-01": "신정",
+  "2027-02-06": "설날 연휴",
+  "2027-02-07": "설날",
+  "2027-02-08": "설날 연휴",
+  "2027-02-09": "대체공휴일",
+  "2027-03-01": "삼일절",
+  "2027-05-05": "어린이날",
+  "2027-05-13": "부처님오신날",
+  "2027-06-06": "현충일",
+  "2027-08-15": "광복절",
+  "2027-09-14": "추석 연휴",
+  "2027-09-15": "추석",
+  "2027-09-16": "추석 연휴",
+  "2027-10-03": "개천절",
+  "2027-10-09": "한글날",
+  "2027-12-25": "기독탄신일"
+};
+const DEPARTMENTS = ["응급전용병동", "51병동", "52병동", "53병동", "60병동", "61병동", "62병동", "63병동", "65병동", "70병동", "71병동", "72병동", "73병동", "80병동", "81병동", "82병동", "83병동", "85병동", "90병동", "91병동", "92병동", "93병동", "95병동", "100병동", "101병동", "분만실", "내시경실", "심혈관센터", "암병원", "응급실", "인공신장실", "1신경계중환자실", "2신경계중환자실", "내과중환자실", "마취통증의학과", "수술실", "신생아중환자실", "심혈관계중환자실", "외과중환자실", "응급중환자실", "중앙공급실", "보호요원실", "간호교육기획팀"];
+const TIME_OPTIONS = ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
+const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+// -------------------------------------------------------------
+// 2. React Bits - DotField 컴포넌트 (React Bits 정품 규격 + 사이트 테마 컬러)
+// -------------------------------------------------------------
+const TWO_PI = Math.PI * 2;
+const DotField = React.memo(({
+  dotRadius = 1.5,
+  dotSpacing = 14,
+  cursorRadius = 500,
+  cursorForce = 0.1,
+  bulgeOnly = true,
+  bulgeStrength = 67,
+  glowRadius = 160,
+  sparkle = false,
+  waveAmplitude = 0,
+  gradientFrom,
+  gradientTo,
+  glowColor,
+  ...rest
+}) => {
+  // ⚡ 모바일 기기 감지 (화면 너비 < 768 또는 터치 인터페이스)
+  const isMobile = React.useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768 || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }, []);
+
+  // ⚡ 모바일 최적화: 점 밀도를 대폭 낮추고(약 70% 감소) 반경 축소하여 CPU 부하 경감
+  const effectiveDotSpacing = isMobile ? Math.max(dotSpacing * 1.85, 26) : dotSpacing;
+  const effectiveCursorRadius = isMobile ? Math.min(cursorRadius, 180) : cursorRadius;
+  const canvasRef = React.useRef(null);
+  const svgRef = React.useRef(null);
+  const glowRef = React.useRef(null);
+  const dotsRef = React.useRef([]);
+  const mouseRef = React.useRef({
+    x: -9999,
+    y: -9999,
+    prevX: -9999,
+    prevY: -9999,
+    speed: 0
+  });
+  const rafRef = React.useRef(null);
+  const sizeRef = React.useRef({
+    w: 0,
+    h: 0,
+    offsetX: 0,
+    offsetY: 0
+  });
+  const glowOpacity = React.useRef(0);
+  const engagement = React.useRef(0);
+  const propsRef = React.useRef({});
+  const rebuildRef = React.useRef(null);
+  const glowIdRef = React.useRef(`dot-field-glow-${Math.random().toString(36).slice(2, 9)}`);
+
+  // ⚡ 다크모드 / 라이트모드 자동 감지
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = e => setIsDarkMode(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  // ⚡ 웹사이트 맞춤형 컬러 (라이트모드 시인성 강화 & 다크모드 자연스러움 유지)
+  const activeGradFrom = gradientFrom || (isDarkMode ? 'rgba(96, 165, 250, 0.40)' : 'rgba(37, 99, 235, 0.55)');
+  const activeGradTo = gradientTo || (isDarkMode ? 'rgba(192, 132, 252, 0.30)' : 'rgba(124, 58, 237, 0.42)');
+  const activeGlow = glowColor || (isDarkMode ? 'rgba(96, 165, 250, 0.20)' : 'rgba(37, 99, 235, 0.22)');
+  propsRef.current = {
+    dotRadius,
+    dotSpacing: effectiveDotSpacing,
+    cursorRadius: effectiveCursorRadius,
+    cursorForce,
+    bulgeOnly,
+    bulgeStrength,
+    sparkle,
+    waveAmplitude,
+    gradientFrom: activeGradFrom,
+    gradientTo: activeGradTo
+  };
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    const glowEl = glowRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', {
+      alpha: true
+    });
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let resizeTimer;
+    function resize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(doResize, 100);
+    }
+    function doResize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sizeRef.current = {
+        w,
+        h,
+        offsetX: rect.left + window.scrollX,
+        offsetY: rect.top + window.scrollY
+      };
+      buildDots(w, h);
+    }
+    function buildDots(w, h) {
+      const p = propsRef.current;
+      const step = p.dotRadius + p.dotSpacing;
+      const cols = Math.floor(w / step);
+      const rows = Math.floor(h / step);
+      const padX = w % step / 2;
+      const padY = h % step / 2;
+      const dots = new Array(rows * cols);
+      let idx = 0;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const ax = padX + col * step + step / 2;
+          const ay = padY + row * step + step / 2;
+          dots[idx++] = {
+            ax,
+            ay,
+            sx: ax,
+            sy: ay,
+            vx: 0,
+            vy: 0,
+            x: ax,
+            y: ay
+          };
+        }
+      }
+      dotsRef.current = dots;
+    }
+    function onMouseMove(e) {
+      const s = sizeRef.current;
+      mouseRef.current.x = e.pageX - s.offsetX;
+      mouseRef.current.y = e.pageY - s.offsetY;
+    }
+    function updateMouseSpeed() {
+      const m = mouseRef.current;
+      const dx = m.prevX - m.x;
+      const dy = m.prevY - m.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      m.speed += (dist - m.speed) * 0.5;
+      if (m.speed < 0.001) m.speed = 0;
+      m.prevX = m.x;
+      m.prevY = m.y;
+    }
+    const speedInterval = setInterval(updateMouseSpeed, 20);
+    let frameCount = 0;
+    function tick() {
+      frameCount++;
+      const dots = dotsRef.current;
+      const m = mouseRef.current;
+      const {
+        w,
+        h
+      } = sizeRef.current;
+      const p = propsRef.current;
+      const len = dots.length;
+      const t = frameCount * 0.02;
+      const targetEngagement = Math.min(m.speed / 5, 1);
+      engagement.current += (targetEngagement - engagement.current) * 0.06;
+      if (engagement.current < 0.001) engagement.current = 0;
+      const eng = engagement.current;
+      glowOpacity.current += (eng - glowOpacity.current) * 0.08;
+      if (glowEl) {
+        glowEl.setAttribute('cx', m.x);
+        glowEl.setAttribute('cy', m.y);
+        glowEl.style.opacity = glowOpacity.current;
+      }
+      ctx.clearRect(0, 0, w, h);
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, p.gradientFrom);
+      grad.addColorStop(1, p.gradientTo);
+      ctx.fillStyle = grad;
+      const cr = p.cursorRadius;
+      const crSq = cr * cr;
+      const rad = p.dotRadius / 2;
+      const isBulge = p.bulgeOnly;
+      ctx.beginPath();
+      for (let i = 0; i < len; i++) {
+        const d = dots[i];
+        const dx = m.x - d.ax;
+        const dy = m.y - d.ay;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < crSq && eng > 0.01) {
+          const dist = Math.sqrt(distSq);
+          if (isBulge) {
+            const t = 1 - dist / cr;
+            const push = t * t * p.bulgeStrength * eng;
+            const angle = Math.atan2(dy, dx);
+            d.sx += (d.ax - Math.cos(angle) * push - d.sx) * 0.15;
+            d.sy += (d.ay - Math.sin(angle) * push - d.sy) * 0.15;
+          } else {
+            const angle = Math.atan2(dy, dx);
+            const move = 500 / dist * (m.speed * p.cursorForce);
+            d.vx += Math.cos(angle) * -move;
+            d.vy += Math.sin(angle) * -move;
+          }
+        } else if (isBulge) {
+          d.sx += (d.ax - d.sx) * 0.1;
+          d.sy += (d.ay - d.sy) * 0.1;
+        }
+        if (!isBulge) {
+          d.vx *= 0.9;
+          d.vy *= 0.9;
+          d.x = d.ax + d.vx;
+          d.y = d.ay + d.vy;
+          d.sx += (d.x - d.sx) * 0.1;
+          d.sy += (d.y - d.sy) * 0.1;
+        }
+        let drawX = d.sx;
+        let drawY = d.sy;
+        if (p.waveAmplitude > 0) {
+          drawY += Math.sin(d.ax * 0.03 + t) * p.waveAmplitude;
+          drawX += Math.cos(d.ay * 0.03 + t * 0.7) * p.waveAmplitude * 0.5;
+        }
+        if (p.sparkle) {
+          const hash = (i * 2654435761 ^ frameCount >> 3) >>> 0;
+          if (hash % 100 < 3) {
+            ctx.moveTo(drawX + rad * 1.8, drawY);
+            ctx.arc(drawX, drawY, rad * 1.8, 0, TWO_PI);
+          } else {
+            ctx.moveTo(drawX + rad, drawY);
+            ctx.arc(drawX, drawY, rad, 0, TWO_PI);
+          }
+        } else {
+          ctx.moveTo(drawX + rad, drawY);
+          ctx.arc(drawX, drawY, rad, 0, TWO_PI);
+        }
+      }
+      ctx.fill();
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    doResize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', onMouseMove, {
+      passive: true
+    });
+    function onTouchMove(e) {
+      if (!e.touches || e.touches.length === 0) return;
+      const t = e.touches[0];
+      const s = sizeRef.current;
+      mouseRef.current.x = t.pageX - s.offsetX;
+      mouseRef.current.y = t.pageY - s.offsetY;
+    }
+    window.addEventListener('touchmove', onTouchMove, {
+      passive: true
+    });
+    const startTimer = setTimeout(() => {
+      rafRef.current = requestAnimationFrame(tick);
+    }, isMobile ? 300 : 150);
+    rebuildRef.current = () => {
+      const {
+        w,
+        h
+      } = sizeRef.current;
+      if (w > 0 && h > 0) buildDots(w, h);
+    };
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      clearInterval(speedInterval);
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('touchmove', onTouchMove);
+      clearTimeout(startTimer);
+    };
+  }, []);
+  React.useEffect(() => {
+    rebuildRef.current?.();
+  }, [dotRadius, dotSpacing, isDarkMode]);
+  return /*#__PURE__*/React.createElement("div", _extends({
+    className: "absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
+  }, rest), /*#__PURE__*/React.createElement("canvas", {
+    ref: canvasRef,
+    style: {
+      position: 'absolute',
+      inset: 0,
+      width: '100%',
+      height: '100%'
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
+    ref: svgRef,
+    style: {
+      position: 'absolute',
+      inset: 0,
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("radialGradient", {
+    id: glowIdRef.current
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: activeGlow
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "transparent"
+  }))), /*#__PURE__*/React.createElement("circle", {
+    ref: glowRef,
+    cx: "-9999",
+    cy: "-9999",
+    r: glowRadius,
+    fill: `url(#${glowIdRef.current})`,
+    style: {
+      opacity: 0,
+      willChange: 'opacity'
+    }
+  })));
+});
+
+// -------------------------------------------------------------
+// 메인 App 컴포넌트
+// -------------------------------------------------------------
+function App() {
+  const [user, setUser] = React.useState(() => {
+    const saved = sessionStorage.getItem('cardPortalUser');
+    if (!saved) return null;
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed?.token ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [loginInput, setLoginInput] = React.useState({
+    name: '',
+    empNo: ''
+  });
+
+  // ⚡ SWR 로컬 캐시 초기화 (체감 로딩 속도 0초 달성)
+  const [events, setEvents] = React.useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_card_events');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [customHolidays, setCustomHolidays] = React.useState(() => {
+    try {
+      const cached = localStorage.getItem('cached_card_holidays');
+      return cached ? JSON.parse(cached) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+  const [notice, setNotice] = React.useState(() => {
+    try {
+      return localStorage.getItem('cached_card_notice') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [isFetchingStatus, setIsFetchingStatus] = React.useState(() => {
+    const hasCache = !!localStorage.getItem('cached_card_events');
+    return !hasCache; // 캐시가 있으면 대기 스피너 생략
+  });
+  const customHolidaysRef = React.useRef(customHolidays);
+  React.useEffect(() => {
+    customHolidaysRef.current = customHolidays;
+  }, [customHolidays]);
+  const getHolidayName = dateObj => {
+    const dateStr = [dateObj.getFullYear(), String(dateObj.getMonth() + 1).padStart(2, '0'), String(dateObj.getDate()).padStart(2, '0')].join('-');
+    if (customHolidaysRef.current && customHolidaysRef.current[dateStr]) {
+      return customHolidaysRef.current[dateStr];
+    }
+    if (dateObj.getMonth() === 6 && dateObj.getDate() === 17) return "제헌절";
+    return FALLBACK_HOLIDAYS[dateStr] || null;
+  };
+  const [loading, setLoading] = React.useState(false);
+  const [showListModal, setShowListModal] = React.useState(false);
+  const [selectedDateReservations, setSelectedDateReservations] = React.useState([]);
+  const calendarContainerRef = React.useRef(null);
+  const calendarInstanceRef = React.useRef(null);
+  const lastSelectedRef = React.useRef(null);
+  const eventsRef = React.useRef(events);
+  const lastFetchedTokenRef = React.useRef('__initial__');
+  const [showNotice, setShowNotice] = React.useState(false);
+  const [showForm, setShowForm] = React.useState(false);
+  const [showInstruction, setShowInstruction] = React.useState(() => {
+    const savedUser = sessionStorage.getItem('cardPortalUser');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser);
+      return !parsedUser.isAdmin;
+    }
+    return false;
+  });
+  const [selectedEvent, setSelectedEvent] = React.useState(null);
+  const [selectedSlot, setSelectedSlot] = React.useState(null);
+  const [deptSelect, setDeptSelect] = React.useState('선택');
+  const [deptCustom, setDeptCustom] = React.useState('');
+  const [budgetSelect, setBudgetSelect] = React.useState('선택');
+  const [budgetCustom, setBudgetCustom] = React.useState('');
+  const [phone1Select, setPhone1Select] = React.useState('010');
+  const [phone1Custom, setPhone1Custom] = React.useState('');
+  const [phone2, setPhone2] = React.useState('');
+  const [phone3, setPhone3] = React.useState('');
+  const [formData, setFormData] = React.useState({
+    id: '',
+    name: '',
+    empNo: '',
+    startDate: '',
+    startTimePart: '',
+    endDate: '',
+    endTimePart: '',
+    purpose: '',
+    details: ''
+  });
+  const [showMyBookings, setShowMyBookings] = React.useState(false);
+  const [budgetFilter, setBudgetFilter] = React.useState('전체');
+  const [toast, setToast] = React.useState(null);
+  const [currentTime, setCurrentTime] = React.useState(new Date());
+  const [feedbackDialog, setFeedbackDialog] = React.useState(null);
+  const feedbackResolverRef = React.useRef(null);
+  const openFeedbackDialog = (kind, message) => new Promise(resolve => {
+    feedbackResolverRef.current = resolve;
+    setFeedbackDialog({
+      kind,
+      message,
+      value: ''
+    });
+  });
+  const closeFeedbackDialog = result => {
+    const resolve = feedbackResolverRef.current;
+    feedbackResolverRef.current = null;
+    setFeedbackDialog(null);
+    resolve?.(result);
+  };
+
+  // 브라우저 기본 alert/confirm/prompt 대신 사이트 스타일 안내창을 사용합니다.
+  const alert = message => {
+    openFeedbackDialog('message', String(message));
+  };
+  const confirm = message => openFeedbackDialog('confirm', String(message));
+  const prompt = message => openFeedbackDialog('prompt', String(message));
+  React.useEffect(() => {
+    const hasOpenDialog = showMyBookings || showListModal || showNotice || showForm || showInstruction || feedbackDialog;
+    if (!hasOpenDialog) return undefined;
+    const handleEscape = event => {
+      if (event.key !== 'Escape') return;
+      setShowMyBookings(false);
+      setShowListModal(false);
+      setShowNotice(false);
+      setShowForm(false);
+      setShowInstruction(false);
+      if (feedbackDialog) closeFeedbackDialog(feedbackDialog.kind === 'prompt' ? null : false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showMyBookings, showListModal, showNotice, showForm, showInstruction, feedbackDialog]);
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const showToast = (message, type = 'success') => {
+    setToast({
+      message,
+      type
+    });
+    setTimeout(() => setToast(null), 2500);
+  };
+  const myBookings = React.useMemo(() => events.filter(ev => ev.extendedProps?.isMine === true && new Date(ev.end) >= currentTime).sort((a, b) => new Date(a.start) - new Date(b.start)), [events, currentTime]);
+  const currentBooking = React.useMemo(() => {
+    const now = currentTime.getTime();
+    return events.find(ev => {
+      const start = new Date(ev.start).getTime();
+      const end = new Date(ev.end).getTime();
+      return start <= now && now < end;
+    }) || null;
+  }, [events, currentTime]);
+  const nextBooking = React.useMemo(() => {
+    const now = currentTime.getTime();
+    return events.filter(ev => new Date(ev.start).getTime() > now).sort((a, b) => new Date(a.start) - new Date(b.start))[0] || null;
+  }, [events, currentTime]);
+  const formatShortDate = dateValue => {
+    const d = new Date(dateValue);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  };
+  const formatClock = dateValue => {
+    const d = new Date(dateValue);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+  const getDateRangeList = (startDateStr, endDateStr) => {
+    const dates = [];
+    const cur = new Date(startDateStr + "T00:00:00");
+    const last = new Date(endDateStr + "T00:00:00");
+    while (cur <= last) {
+      dates.push(cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0'));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  };
+  const callApi = async payload => {
+    let response;
+    try {
+      response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      throw new Error('서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.');
+    }
+    if (!response.ok) {
+      throw new Error(`서버 오류(${response.status})가 발생했습니다.`);
+    }
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error('서버 응답을 읽을 수 없습니다. 잠시 후 다시 시도해주세요.');
+    }
+    if (!data.success) {
+      if (data.code === 'UNAUTHORIZED') {
+        sessionStorage.removeItem('cardPortalUser');
+        setUser(null);
+      }
+      throw new Error(data.message || '요청 처리 중 오류가 발생했습니다.');
+    }
+    return data;
+  };
+  const openBookingById = async (id, startObj, endObj) => {
+    setLoading(true);
+    try {
+      const data = await callApi({
+        action: 'GET_DETAIL',
+        token: user.token,
+        id
+      });
+      const props = data.booking;
+      setSelectedEvent(props);
+      if (DEPARTMENTS.includes(props.dept)) {
+        setDeptSelect(props.dept);
+        setDeptCustom('');
+      } else {
+        setDeptSelect('직접 입력');
+        setDeptCustom(props.dept || '');
+      }
+      if (['간호부', 'QI(적정진료관리팀)', '총무팀', '학생실습비'].includes(props.budget)) {
+        setBudgetSelect(props.budget);
+        setBudgetCustom('');
+      } else {
+        setBudgetSelect('기타');
+        setBudgetCustom(props.budget || '');
+      }
+      if (props.contact) {
+        const p = String(props.contact).replace(/^'/, '').trim().split('-');
+        if (['010', '011', '016'].includes(p[0])) {
+          setPhone1Select(p[0] || '010');
+          setPhone1Custom('');
+        } else {
+          setPhone1Select('기타');
+          setPhone1Custom(p[0] || '');
+        }
+        setPhone2(p[1] || '');
+        setPhone3(p[2] || '');
+      } else {
+        setPhone1Select('010');
+        setPhone1Custom('');
+        setPhone2('');
+        setPhone3('');
+      }
+      const toDateStr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'),
+        toTimeStr = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      setFormData({
+        id: props.id,
+        name: props.name || '',
+        empNo: props.empNo || props.empNoMasked || '비공개',
+        startDate: toDateStr(startObj),
+        startTimePart: toTimeStr(startObj),
+        endDate: toDateStr(endObj),
+        endTimePart: toTimeStr(endObj),
+        purpose: props.purpose || '',
+        details: props.details || ''
+      });
+      setSelectedSlot({
+        startDate: toDateStr(startObj),
+        endDate: toDateStr(endObj)
+      });
+      setShowListModal(false);
+      setShowMyBookings(false);
+      setShowForm(true);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  React.useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
+  const fetchBookings = async (isSilent = false) => {
+    const silent = isSilent === true;
+    if (!silent) setLoading(true);
+    try {
+      const payload = {
+        action: 'LIST'
+      };
+      if (user?.token) payload.token = user.token;
+      const data = await callApi(payload);
+      const parsedEvents = data.bookings.map(b => {
+        const budgetColor = b.budget === '간호부' ? '#3b82f6' : b.budget === '총무팀' ? '#10b981' : b.budget === 'QI(적정진료관리팀)' ? '#f59e0b' : b.budget === '학생실습비' ? '#8b5cf6' : '#64748b';
+        return {
+          id: b.id,
+          title: `[${b.dept}] ${b.name}`,
+          start: b.startTime,
+          end: b.endTime,
+          extendedProps: {
+            ...b,
+            colorCode: budgetColor
+          },
+          backgroundColor: 'transparent',
+          borderColor: 'transparent'
+        };
+      });
+      setEvents(parsedEvents);
+      try {
+        localStorage.setItem('cached_card_events', JSON.stringify(parsedEvents));
+      } catch (e) {}
+      const holidayMap = {};
+      (data.holidays || []).forEach(row => holidayMap[row[0]] = row[1]);
+      setCustomHolidays(holidayMap);
+      try {
+        localStorage.setItem('cached_card_holidays', JSON.stringify(holidayMap));
+      } catch (e) {}
+      const noticeText = data.notice || '';
+      setNotice(noticeText);
+      try {
+        localStorage.setItem('cached_card_notice', noticeText);
+      } catch (e) {}
+    } catch (e) {
+      console.error(e);
+      if (!silent) alert(e.message);
+    } finally {
+      if (!silent) setLoading(false);
+      setIsFetchingStatus(false);
+    }
+  };
+
+  // ⚡ 캐시가 있으면 로그인 전 중복 조회를 생략하고, 로그인 후에는 최신 권한 정보만 1회 동기화
+  React.useEffect(() => {
+    const token = user?.token || '';
+    const hasCachedEvents = !!localStorage.getItem('cached_card_events');
+    const isFirstAnonymousLoad = !token && !hasCachedEvents && lastFetchedTokenRef.current === '__initial__';
+    const isNewAuthenticatedSession = !!token && lastFetchedTokenRef.current !== token;
+    if (!isFirstAnonymousLoad && !isNewAuthenticatedSession) return;
+    lastFetchedTokenRef.current = token;
+    fetchBookings(true);
+  }, [user?.token]);
+  const handleLogin = async e => {
+    e.preventDefault();
+    const trimmedName = loginInput.name.trim(),
+      empNo = loginInput.empNo.trim().toUpperCase();
+    if (!trimmedName || !empNo) return alert('이름과 사번을 정확히 입력해주세요.');
+    setLoading(true);
+    try {
+      const data = await callApi({
+        action: 'LOGIN',
+        name: trimmedName,
+        empNo
+      });
+      const loggedInUser = {
+        ...data.user,
+        token: data.token
+      };
+      setUser(loggedInUser);
+      sessionStorage.setItem('cardPortalUser', JSON.stringify(loggedInUser));
+      if (!loggedInUser.isAdmin) setShowInstruction(true);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleAdminAuth = async () => {
+    const pin = await prompt('관리자 PIN을 입력해주세요.');
+    if (pin === null) return;
+    const cleanPin = String(pin).trim().toLowerCase();
+    if (!cleanPin) return alert('관리자 PIN을 입력해주세요.');
+    setLoading(true);
+    try {
+      const data = await callApi({
+        action: 'ADMIN_AUTH',
+        token: user.token,
+        pin: cleanPin
+      });
+      const upgradedUser = {
+        ...user,
+        ...data.user,
+        token: user.token
+      };
+      setUser(upgradedUser);
+      sessionStorage.setItem('cardPortalUser', JSON.stringify(upgradedUser));
+      showToast('관리자 인증이 완료되었습니다.');
+      await fetchBookings(true);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleSetAnnouncement = async () => {
+    const input = window.prompt('전체 사용자에게 표시할 안내사항을 입력해주세요.\n(비워두고 확인을 누르면 안내사항이 제거됩니다)', notice);
+    if (input === null) return;
+    const text = input.trim();
+    setLoading(true);
+    try {
+      await callApi({
+        action: 'SET_NOTICE',
+        token: user.token,
+        text
+      });
+      await fetchBookings(true);
+      showToast(text ? '안내사항이 등록되었습니다.' : '안내사항이 제거되었습니다.');
+    } catch (e) {
+      alert(e.message || '오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const renderDayCellContent = arg => {
+    const dayNumber = arg.dayNumberText.replace('일', '');
+    const holidayName = getHolidayName(arg.date);
+    const isToday = arg.isToday;
+    const dayOfWeek = arg.date.getDay(); // 0: 일요일, 6: 토요일
+
+    // ⚡ 일요일(빨강), 토요일(파랑), 공휴일(빨강), 오늘(흰색/블루배경), 평일(기본)
+    let numColor = '';
+    if (!isToday) {
+      if (dayOfWeek === 0 || holidayName) {
+        numColor = 'color: #ef4444 !important; font-weight: 700;';
+      } else if (dayOfWeek === 6) {
+        numColor = 'color: #2563eb !important; font-weight: 700;';
+      }
+    }
+    let leftTag = null;
+    if (holidayName && arg.view.type === 'dayGridMonth') {
+      const safeHolidayName = escapeHtml(holidayName);
+      leftTag = `<span class="fc-holiday-name" style="font-size: 11px; font-weight: 600; color: #ef4444; white-space: nowrap; line-height: 1; letter-spacing: -0.02em;" title="${safeHolidayName}">${safeHolidayName}</span>`;
+    } else if (isToday && arg.view.type === 'dayGridMonth') {
+      leftTag = `<span class="fc-today-badge" style="font-size: 10px; font-weight: 800; color: #2563eb; background-color: rgba(37,99,235,0.12); padding: 1px 4px; border-radius: 3px; white-space: nowrap; line-height: 1.1;">오늘</span>`;
+    }
+    if (leftTag) {
+      return {
+        html: `<div style="display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; min-width: 0 !important; gap: 4px !important; white-space: nowrap !important;">
+                            ${leftTag}
+                            <span class="fc-day-num" style="${numColor}">${dayNumber}</span>
+                        </div>`
+      };
+    }
+    return {
+      html: `<div style="display: flex !important; justify-content: flex-end !important; align-items: center !important; width: 100% !important;">
+                        <span class="fc-day-num" style="${numColor}">${dayNumber}</span>
+                    </div>`
+    };
+  };
+
+  // ⚡ 일/주간(시간표) 뷰 진입 시 스크롤 없이 바로 "지금"이 보이도록 스크롤 위치 계산 (여유 1시간 포함, 근무시간 범위로 고정)
+  // ⚡ 하루에 보여줄 예약 최대 줄 수 (화면 크기에 따라 고정값으로 계산 -> "true" 자동계산의 날짜별 오차 제거)
+  const getDayMaxEventRows = () => {
+    const w = window.innerWidth;
+    if (w < 480) return 2;
+    if (w < 768) return 3;
+    return 4;
+  };
+
+  // ⚡ 모바일에서는 시간표를 30분 단위 대신 1시간 단위로 그려서 총 높이를 줄임 (일/주간 뷰 스크롤 최소화)
+  const getSlotDuration = () => window.innerWidth < 640 ? '01:00:00' : '00:30:00';
+  const getNowScrollTime = () => {
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const minMin = 8 * 60 + 30; // slotMinTime
+    const maxMin = 17 * 60 + 30; // slotMaxTime
+    const targetMin = Math.min(Math.max(nowMin - 60, minMin), maxMin);
+    const h = Math.floor(targetMin / 60);
+    const m = targetMin % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+  };
+  React.useEffect(() => {
+    if (!user) return;
+    if (!calendarContainerRef.current) return;
+    if (calendarInstanceRef.current) return;
+    const calendar = new FullCalendar.Calendar(calendarContainerRef.current, {
+      height: '100%',
+      expandRows: true,
+      dayMaxEventRows: getDayMaxEventRows(),
+      eventOrder: 'start',
+      scrollTime: getNowScrollTime(),
+      nowIndicator: true,
+      datesSet: function (info) {
+        if (info.view.type === 'timeGridDay' || info.view.type === 'timeGridWeek') {
+          info.view.calendar.scrollToTime(getNowScrollTime());
+        }
+      },
+      windowResize: function (arg) {
+        arg.view.calendar.setOption('dayMaxEventRows', getDayMaxEventRows());
+        arg.view.calendar.setOption('slotDuration', getSlotDuration());
+      },
+      handleWindowResize: true,
+      locale: 'ko',
+      selectable: true,
+      selectLongPressDelay: 0,
+      touchLongPressDelay: 0,
+      allDaySlot: false,
+      slotMinTime: '08:30:00',
+      slotMaxTime: '17:30:00',
+      slotDuration: getSlotDuration(),
+      validRange: {
+        start: '2026-05-01'
+      },
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      buttonText: {
+        month: 'Month',
+        week: 'Week',
+        day: 'Day'
+      },
+      dayCellClassNames: function (arg) {
+        if (getHolidayName(arg.date)) return ['holiday-day'];
+        return [];
+      },
+      dayCellContent: renderDayCellContent,
+      eventContent: function (arg) {
+        const start = new Date(arg.event.start);
+        const end = new Date(arg.event.end);
+
+        // ⚡ 시간 포맷팅: 9A30-3P 형식
+        const formatSingle = d => {
+          let h = d.getHours();
+          const m = d.getMinutes();
+          const ampm = h < 12 ? 'A' : 'P';
+          let displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+          const mStr = m === 0 ? '' : String(m).padStart(2, '0');
+          return `${displayH}${ampm}${mStr}`;
+        };
+        const timeStr = `${formatSingle(start)}-${formatSingle(end)}`;
+        const rawTitle = arg.event.title || '';
+        const dept = rawTitle.includes(']') ? rawTitle.split(']')[0].replace('[', '') : rawTitle;
+        const evColor = arg.event.extendedProps?.colorCode || '#3b82f6';
+        const safeTime = escapeHtml(timeStr);
+        const safeDept = escapeHtml(dept);
+        const isMine = arg.event.extendedProps?.isMine === true;
+
+        // ⚡ 세련된 소프트 파스텔 한 줄 포맷: [시간 / 부서] (예: 2P30-5P / 50병동)
+        return {
+          html: `<div style="background-color: ${evColor}12; border-left: 2.5px solid ${isMine ? '#2563eb' : evColor}99; box-shadow: ${isMine ? 'inset 0 0 0 1px rgba(37,99,235,0.22)' : 'none'};" class="w-full px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1.5 leading-normal select-none overflow-hidden whitespace-nowrap" title="${isMine ? 'Me · ' : ''}${safeTime} / ${safeDept}">
+                                <span class="font-bold shrink-0 text-slate-800 dark:text-slate-100 text-[10.5px]">${safeTime}</span>
+                                <span class="text-slate-300 dark:text-slate-600 text-[9.5px] shrink-0 font-light">/</span>
+                                <span class="font-medium text-[11px] truncate text-slate-600 dark:text-slate-300">${safeDept}</span>
+                                ${isMine ? '<span class="shrink-0 rounded bg-blue-100 text-blue-700 px-1 text-[9px] font-bold">Me</span>' : ''}
+                            </div>`
+        };
+      },
+      unselect: function () {},
+      select: function (info) {
+        const calendar = info.view.calendar;
+        const currentSelectedStr = info.startStr;
+        if (lastSelectedRef.current !== currentSelectedStr) {
+          lastSelectedRef.current = currentSelectedStr;
+          return;
+        }
+        lastSelectedRef.current = null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const maxSelectDate = new Date();
+        maxSelectDate.setMonth(maxSelectDate.getMonth() + 2);
+        const selectStart = new Date(info.startStr + "T00:00:00");
+        if (!user.isAdmin) {
+          if (selectStart < today) {
+            alert("⚠️ 지난 날짜는 예약할 수 없습니다.");
+            calendarInstanceRef.current.unselect();
+            lastSelectedRef.current = null;
+            return;
+          }
+          if (selectStart > maxSelectDate) {
+            alert("⚠️ 예약은 2개월 이내의 날짜만 신청 가능합니다.");
+            calendarInstanceRef.current.unselect();
+            lastSelectedRef.current = null;
+            return;
+          }
+        }
+        if (!isAvailableDate(info.startStr.split('T')[0])) {
+          alert("⚠️ 주말 및 공휴일은 예약할 수 없습니다.");
+          calendarInstanceRef.current.unselect();
+          lastSelectedRef.current = null;
+          return;
+        }
+        let sDate = info.startStr.split('T')[0];
+        let eDate = info.endStr && info.endStr.length === 10 ? new Date(new Date(info.endStr).getTime() - 86400000).toISOString().split('T')[0] : info.endStr.split('T')[0];
+        setSelectedSlot({
+          startDate: sDate,
+          endDate: eDate
+        });
+        if (window.innerWidth < 640) {
+          const allFcEvents = calendar.getEvents();
+          const clickedTime = new Date(sDate + "T00:00:00").getTime();
+          const nextDayTime = clickedTime + 24 * 60 * 60 * 1000;
+          const dayEvents = allFcEvents.filter(ev => {
+            return ev.start.getTime() < nextDayTime && ev.end.getTime() > clickedTime;
+          }).map(ev => ({
+            id: ev.id,
+            title: ev.title,
+            startObj: ev.start,
+            endObj: ev.end,
+            extendedProps: ev.extendedProps
+          }));
+          setSelectedDateReservations(dayEvents);
+          setShowListModal(true);
+        } else {
+          setSelectedEvent(null);
+          setShowNotice(true);
+        }
+        calendarInstanceRef.current.unselect();
+      },
+      eventClick: function (info) {
+        if (window.innerWidth < 640) {
+          const calendar = info.view.calendar;
+          const evStart = info.event.start;
+          const sDate = evStart.getFullYear() + '-' + String(evStart.getMonth() + 1).padStart(2, '0') + '-' + String(evStart.getDate()).padStart(2, '0');
+          setSelectedSlot({
+            startDate: sDate,
+            endDate: sDate
+          });
+          const allFcEvents = calendar.getEvents();
+          const clickedTime = new Date(sDate + "T00:00:00").getTime();
+          const nextDayTime = clickedTime + 24 * 60 * 60 * 1000;
+          const dayEvents = allFcEvents.filter(ev => {
+            return ev.start.getTime() < nextDayTime && ev.end.getTime() > clickedTime;
+          }).map(ev => ({
+            id: ev.id,
+            title: ev.title,
+            startObj: ev.start,
+            endObj: ev.end,
+            extendedProps: ev.extendedProps
+          }));
+          setSelectedDateReservations(dayEvents);
+          setShowListModal(true);
+        } else {
+          openBookingById(info.event.id, info.event.start, info.event.end);
+        }
+      }
+    });
+    calendar.render();
+    calendarInstanceRef.current = calendar;
+    calendar.today();
+    setTimeout(() => {
+      calendar.updateSize();
+      if (window.matchMedia('(max-width: 640px)').matches) {
+        calendarContainerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }, 100);
+    return () => {
+      if (calendarInstanceRef.current) {
+        calendarInstanceRef.current.destroy();
+        calendarInstanceRef.current = null;
+      }
+    };
+  }, [user]);
+  React.useEffect(() => {
+    if (!calendarInstanceRef.current) return;
+    let visibleEvents = events;
+    if (budgetFilter !== '전체') {
+      visibleEvents = events.filter(ev => {
+        const budget = ev.extendedProps?.budget || '';
+        if (budgetFilter === '기타') {
+          return !['간호부', 'QI(적정진료관리팀)', '총무팀', '학생실습비'].includes(budget);
+        }
+        return budget === budgetFilter;
+      });
+    }
+    calendarInstanceRef.current.removeAllEvents();
+    calendarInstanceRef.current.addEventSource(visibleEvents);
+  }, [events, budgetFilter]);
+  React.useEffect(() => {
+    if (calendarInstanceRef.current) {
+      calendarInstanceRef.current.setOption('dayCellClassNames', function (arg) {
+        if (getHolidayName(arg.date)) {
+          return ['holiday-day'];
+        }
+        return [];
+      });
+      calendarInstanceRef.current.setOption('dayCellContent', renderDayCellContent);
+      calendarInstanceRef.current.render();
+    }
+  }, [customHolidays]);
+
+  // ⚡ 3. 자동 입력 보조 (스마트 기본값 및 동기화)
+  const confirmNotice = () => {
+    setShowNotice(false);
+    setDeptSelect('선택');
+    setDeptCustom('');
+    setBudgetSelect('간호부'); // 가장 많이 사용하는 기본 예산 자동 지정
+    setBudgetCustom('');
+    setPhone1Select('010');
+    setPhone1Custom('');
+    setPhone2('');
+    setPhone3('');
+    const sDate = selectedSlot?.startDate || '';
+    const eDate = selectedSlot?.endDate || sDate;
+    setFormData({
+      id: '',
+      name: user.name,
+      empNo: user.empNo,
+      startDate: sDate,
+      startTimePart: '09:00',
+      // 업무 시작 기본 시간
+      endDate: eDate,
+      endTimePart: '12:00',
+      // 기본 오전 대여 추천
+      purpose: '',
+      details: ''
+    });
+    setShowForm(true);
+  };
+  const isAvailableDate = dateStr => {
+    if (!dateStr) return false;
+    const date = new Date(dateStr + "T00:00:00");
+    const day = date.getDay();
+    if (day === 0 || day === 6) return false;
+    if (typeof getHolidayName === 'function' && getHolidayName(date)) return false;
+    return true;
+  };
+
+  // ⚡ 시작일 변경 시 반납일 자동 동기화
+  const handleStartDateChange = newStartDate => {
+    setFormData(prev => {
+      const shouldSyncEnd = !prev.endDate || prev.endDate < newStartDate;
+      return {
+        ...prev,
+        startDate: newStartDate,
+        endDate: shouldSyncEnd ? newStartDate : prev.endDate
+      };
+    });
+  };
+
+  // ⚡ 시작시간 변경 시 반납시간 스마트 추천 (자동 입력)
+  const handleStartTimeChange = newStartTime => {
+    setFormData(prev => {
+      let updatedEndTime = prev.endTimePart;
+      if (!prev.endTimePart || prev.startDate === prev.endDate && prev.endTimePart <= newStartTime) {
+        // 2시간 뒤 또는 당일 17:30 자동 설정
+        const [h, m] = newStartTime.split(':').map(Number);
+        const endHour = Math.min(h + 2, 17);
+        const endStr = `${String(endHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        updatedEndTime = TIME_OPTIONS.includes(endStr) ? endStr : '17:30';
+      }
+      return {
+        ...prev,
+        startTimePart: newStartTime,
+        endTimePart: updatedEndTime
+      };
+    });
+  };
+  const handleSubmit = async e => {
+    e.preventDefault();
+    const finalDept = deptSelect === '직접 입력' ? String(deptCustom || "").trim() : deptSelect;
+    const finalBudget = budgetSelect === '기타' ? String(budgetCustom || "").trim() : budgetSelect;
+    const finalPhone1 = phone1Select === '기타' ? String(phone1Custom || "").trim() : phone1Select;
+    if (deptSelect === '선택') return alert("대여 부서를 선택해주세요.");
+    if (budgetSelect === '선택') return alert("사용 예산 구분을 선택해주세요.");
+    if (!formData.startDate || !formData.startTimePart || !formData.endDate || !formData.endTimePart) {
+      return alert("대여/반납 예정일 및 시간을 모두 선택해주세요.");
+    }
+    if (!user.isAdmin) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const maxBookingDate = new Date();
+      maxBookingDate.setHours(23, 59, 59, 999);
+      maxBookingDate.setMonth(maxBookingDate.getMonth() + 2);
+      const startDateOnly = new Date(`${formData.startDate}T00:00:00`);
+      const endDateOnly = new Date(`${formData.endDate}T00:00:00`);
+      if (startDateOnly < today) {
+        return alert("지난 날짜는 예약할 수 없습니다.");
+      }
+      if (endDateOnly < today) {
+        return alert("지난 날짜는 반납일로 선택할 수 없습니다.");
+      }
+      if (startDateOnly > maxBookingDate || endDateOnly > maxBookingDate) {
+        return alert("예약은 신청일 기준 2개월 이내에서만 가능합니다.");
+      }
+    }
+    if (!isAvailableDate(formData.startDate)) return alert("대여 시작일은 주말 및 공휴일을 제외한 평일만 선택 가능합니다.");
+    if (!isAvailableDate(formData.endDate)) return alert("반납 예정일은 주말 및 공휴일을 제외한 평일만 선택 가능합니다.");
+    const combinedContact = `${finalPhone1}-${phone2.trim()}-${phone3.trim()}`;
+    const newStart = new Date(`${formData.startDate}T${formData.startTimePart}:00`);
+    const newEnd = new Date(`${formData.endDate}T${formData.endTimePart}:00`);
+    if (newStart >= newEnd) {
+      alert("반납 예정시간은 대여 시작시간보다 나중이어야 합니다.");
+      return;
+    }
+    let validDaysCount = 0;
+    let tempDate = new Date(`${formData.startDate}T00:00:00`);
+    const endDateLimit = new Date(`${formData.endDate}T00:00:00`);
+    while (tempDate <= endDateLimit) {
+      const yyyy = tempDate.getFullYear();
+      const mm = String(tempDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(tempDate.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      if (isAvailableDate(dateStr)) {
+        validDaysCount++;
+      }
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
+    if (!user.isAdmin && validDaysCount > 3) {
+      alert("원활한 카드 사용을 위해 장기 예약은 최대 3일(영업일 기준)까지만 가능합니다.");
+      return;
+    }
+    const isOverlap = events.some(ev => {
+      if (formData.id && String(ev.id) === String(formData.id)) return false;
+      const evStart = new Date(ev.start).getTime();
+      const evEnd = new Date(ev.end).getTime();
+      const reqStart = newStart.getTime();
+      const reqEnd = newEnd.getTime();
+      return reqStart < evEnd && reqEnd > evStart;
+    });
+    if (isOverlap) {
+      alert("선택하신 시간에 이미 예약된 내역이 있습니다.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const actionType = formData.id ? "UPDATE" : "CREATE";
+      const payload = {
+        id: formData.id,
+        dept: finalDept,
+        startTime: `${formData.startDate}T${formData.startTimePart}:00`,
+        endTime: `${formData.endDate}T${formData.endTimePart}:00`,
+        budget: finalBudget,
+        purpose: formData.purpose,
+        details: formData.details,
+        contact: combinedContact
+      };
+      const result = await callApi({
+        action: actionType,
+        token: user.token,
+        ...payload
+      });
+      setLoading(false);
+      setShowForm(false);
+      calendarInstanceRef.current?.unselect();
+      const tempId = formData.id || result.id || "temp-" + Date.now(),
+        budgetColor = payload.budget === '간호부' ? '#3b82f6' : payload.budget === '총무팀' ? '#10b981' : payload.budget === 'QI(적정진료관리팀)' ? '#f59e0b' : payload.budget === '학생실습비' ? '#8b5cf6' : '#64748b';
+      const newEvent = {
+        id: tempId,
+        title: `[${payload.dept}] ${user.name}`,
+        start: payload.startTime,
+        end: payload.endTime,
+        extendedProps: {
+          id: tempId,
+          dept: payload.dept,
+          name: user.name,
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+          budget: payload.budget,
+          purpose: payload.purpose,
+          isMine: true,
+          canEdit: true,
+          canViewContact: true,
+          contactMasked: payload.contact.replace(/^(\d{2,3})-\d{3,4}-(\d{4})$/, '$1-****-$2'),
+          colorCode: budgetColor
+        },
+        backgroundColor: 'transparent',
+        borderColor: 'transparent'
+      };
+      setEvents(prev => formData.id ? prev.map(ev => String(ev.id) === String(formData.id) ? newEvent : ev) : [...prev, newEvent]);
+      fetchBookings(true);
+      showToast("예약이 저장되었습니다.");
+    } catch (e) {
+      console.error("저장 중 에러 발생:", e);
+      alert(e.message || "오류 발생");
+      setLoading(false);
+    }
+  };
+  const handleDelete = async () => {
+    if (!(await confirm("정말 이 예약을 취소하시겠습니까?"))) return;
+    setLoading(true);
+    try {
+      await callApi({
+        action: 'DELETE',
+        token: user.token,
+        id: formData.id
+      });
+      setLoading(false);
+      setShowForm(false);
+      calendarInstanceRef.current?.unselect();
+      setEvents(prev => prev.filter(ev => String(ev.id) !== String(formData.id)));
+      fetchBookings(true);
+      showToast("예약이 취소되었습니다.");
+    } catch (e) {
+      alert(e.message || "오류 발생");
+      setLoading(false);
+    }
+  };
+  const hasPermission = React.useMemo(() => !selectedEvent || selectedEvent.canEdit === true, [selectedEvent]);
+  const handleLogout = async () => {
+    const token = user?.token;
+    try {
+      if (token) await callApi({
+        action: 'LOGOUT',
+        token
+      });
+    } catch (e) {} finally {
+      setUser(null);
+      sessionStorage.removeItem('cardPortalUser');
+      setSelectedEvent(null);
+      setShowForm(false);
+      setShowListModal(false);
+      setShowNotice(false);
+      setShowMyBookings(false);
+    }
+  };
+
+  // ---------------------------------------------------------
+  // ⭐ 1 & 2. 비로그인 (메인 로그인 화면) 영역 + DotField 배경
+  // ---------------------------------------------------------
+  if (!user) {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "relative h-dvh w-full flex items-center justify-center bg-gradient-to-br from-blue-50/60 via-slate-50 to-indigo-50/40 dark:from-[#070d18] dark:via-[#0b1120] dark:to-[#111827] px-4 transition-colors duration-200 overflow-hidden"
+    }, /*#__PURE__*/React.createElement(DotField, null), /*#__PURE__*/React.createElement("div", {
+      className: "relative z-10 max-w-md w-full bg-white/85 dark:bg-slate-800/85 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(30,58,138,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-7 sm:p-9 border border-white/70 dark:border-slate-700/70 transition-all"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-center mb-6 select-none"
+    }, /*#__PURE__*/React.createElement("h2", {
+      className: "text-2xl font-bold text-slate-900 dark:text-white tracking-tight cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition",
+      onClick: () => window.location.reload()
+    }, "\uAC04\uD638\uBD80 \uBC95\uC778\uCE74\uB4DC \uC608\uC57D \uC2DC\uC2A4\uD15C"), /*#__PURE__*/React.createElement("p", {
+      className: "text-sm text-slate-500 dark:text-slate-400 mt-2 font-medium"
+    }, "\uC774\uB984\uACFC \uC0AC\uBC88\uC744 \uC785\uB825\uD558\uC5EC \uB85C\uADF8\uC778\uD574 \uC8FC\uC138\uC694.")), notice && /*#__PURE__*/React.createElement("div", {
+      role: "status",
+      className: "mb-5 bg-sky-50 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 rounded-xl px-4 py-3 flex items-start gap-2 text-xs sm:text-sm text-sky-800 dark:text-sky-200"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "shrink-0"
+    }, "\uD83D\uDCE2"), /*#__PURE__*/React.createElement("span", {
+      className: "flex-1 whitespace-pre-line break-words font-medium"
+    }, notice)), /*#__PURE__*/React.createElement("div", {
+      className: "mb-6 bg-slate-50/80 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-3 min-h-[64px] flex flex-col justify-center transition-all select-none"
+    }, isFetchingStatus ? /*#__PURE__*/React.createElement("div", {
+      className: "flex flex-col items-center justify-center py-1"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "typing-indicator scale-75"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "typing-circle"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "typing-circle"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "typing-circle"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "typing-shadow"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "typing-shadow"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "typing-shadow"
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "text-[11px] font-medium text-slate-400 dark:text-slate-400 mt-1"
+    }, "\uC2E4\uC2DC\uAC04 \uC0C1\uD0DC \uC870\uD68C \uC911...")) : /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center justify-between gap-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center gap-3 min-w-0"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: `w-2.5 h-2.5 rounded-full shrink-0 ${currentBooking ? 'bg-red-500' : 'bg-emerald-500'}`
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "min-w-0 text-left"
+    }, currentBooking ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "text-sm font-bold text-slate-900 dark:text-white"
+    }, "\uD604\uC7AC \uC0AC\uC6A9 \uC911"), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5"
+    }, currentBooking.extendedProps?.dept, " \xB7 ", formatClock(currentBooking.start), " ~ ", formatClock(currentBooking.end))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "text-sm font-bold text-emerald-600 dark:text-emerald-400"
+    }, "\uD604\uC7AC \uB300\uC5EC \uAC00\uB2A5"), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs text-slate-400 mt-0.5"
+    }, "\uD604\uC7AC \uC608\uC57D\uB41C \uC0AC\uC6A9\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.")))), nextBooking && /*#__PURE__*/React.createElement("div", {
+      className: "text-right shrink-0"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-[10px] text-slate-400"
+    }, "\uB2E4\uC74C \uC608\uC57D"), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5"
+    }, formatShortDate(nextBooking.start), " ", formatClock(nextBooking.start))))), /*#__PURE__*/React.createElement("form", {
+      onSubmit: handleLogin,
+      className: "space-y-5"
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+    }, "\uC774\uB984"), /*#__PURE__*/React.createElement("input", {
+      autoFocus: true,
+      type: "text",
+      required: true,
+      value: loginInput.name,
+      onChange: e => setLoginInput({
+        ...loginInput,
+        name: e.target.value
+      }),
+      className: "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 text-base sm:text-sm transition",
+      placeholder: "\uD64D\uAE38\uB3D9"
+    })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+      className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2"
+    }, "\uC0AC\uBC88"), /*#__PURE__*/React.createElement("input", {
+      type: "text",
+      required: true,
+      maxLength: 5,
+      value: loginInput.empNo,
+      onChange: e => {
+        const formattedEmpNo = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        setLoginInput({
+          ...loginInput,
+          empNo: formattedEmpNo
+        });
+      },
+      className: "w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 text-base sm:text-sm transition",
+      placeholder: "\uC0AC\uBC88 5\uC790\uB9AC \uC785\uB825"
+    })), /*#__PURE__*/React.createElement("button", {
+      type: "submit",
+      disabled: loading,
+      className: "w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition text-sm flex items-center justify-center"
+    }, loading ? '접속 중...' : '시스템 접속'))), /*#__PURE__*/React.createElement("div", {
+      className: "absolute bottom-3 right-3 sm:right-4 z-[40] text-right pointer-events-none opacity-80 select-none"
+    }, /*#__PURE__*/React.createElement("p", {
+      className: "text-[10px] font-medium text-slate-400 dark:text-slate-500"
+    }, "\xA9 vico.yj All rights reserved. ", /*#__PURE__*/React.createElement("span", {
+      className: "mx-1 text-slate-300 dark:text-slate-600"
+    }, "|"), " codeyj@duck.com")));
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    className: "relative min-h-dvh h-auto sm:h-dvh flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200 overflow-x-hidden overflow-y-auto sm:overflow-hidden"
+  }, /*#__PURE__*/React.createElement("header", {
+    className: "relative bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3 shrink-0 shadow-sm transition-colors duration-200 z-20"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col select-none relative z-10"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-lg font-bold text-slate-900 dark:text-white tracking-tight cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition",
+    onClick: () => {
+      setShowMyBookings(false);
+      setShowForm(false);
+      setShowListModal(false);
+      setShowNotice(false);
+      if (calendarInstanceRef.current) {
+        calendarInstanceRef.current.today();
+        calendarInstanceRef.current.changeView('dayGridMonth');
+      }
+    }
+  }, "DNS : Card-Portal"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium"
+  }, /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    className: "w-3.5 h-3.5 mr-1",
+    viewBox: "0 0 24 24",
+    fill: "currentColor"
+  }, /*#__PURE__*/React.createElement("path", {
+    fillRule: "evenodd",
+    d: "M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 0 1 .67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 1 1-.671-1.34l.041-.022ZM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z",
+    clipRule: "evenodd"
+  })), /*#__PURE__*/React.createElement("span", null, "\uC608\uC57D\uC740 \uCD5C\uB300 2\uAC1C\uC6D4 \uB0B4 / 3\uC77C \uCD08\uACFC \uC7A5\uAE30 \uC608\uC57D\uC740 \uC81C\uD55C\uB429\uB2C8\uB2E4."))), /*#__PURE__*/React.createElement("div", {
+    className: "hidden md:flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[30] items-center gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 shadow-sm select-none transition-all whitespace-nowrap"
+  }, isFetchingStatus ? /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 text-slate-500 dark:text-slate-400 px-1 py-0.5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-indicator scale-50 -my-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-medium"
+  }, "\uC870\uD68C \uC911...")) : /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: `w-2.5 h-2.5 rounded-full shrink-0 ${currentBooking ? 'bg-red-500' : 'bg-emerald-500'}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col justify-center min-w-[70px]"
+  }, currentBooking ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] font-bold text-slate-900 dark:text-white leading-tight"
+  }, "\uC0AC\uC6A9 \uC911"), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[120px]"
+  }, currentBooking.extendedProps?.dept)) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] font-bold text-emerald-600 dark:text-emerald-400 leading-tight"
+  }, "\uB300\uC5EC \uAC00\uB2A5"), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] text-slate-400 truncate"
+  }, "\uC608\uC57D \uC5C6\uC74C")))), nextBooking && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "w-[1px] h-6 bg-slate-200 dark:bg-slate-700 mx-1"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col justify-center text-right shrink-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-400 leading-tight"
+  }, "\uB2E4\uC74C \uC608\uC57D"), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] font-semibold text-slate-700 dark:text-slate-200 truncate mt-0.5"
+  }, formatShortDate(nextBooking.start), " ", formatClock(nextBooking.start)))))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-2 sm:space-x-3 relative z-10"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "text-xs sm:text-sm text-slate-600 dark:text-slate-300 shrink-0"
+  }, /*#__PURE__*/React.createElement("strong", {
+    className: "text-slate-900 dark:text-white"
+  }, user.name), " \uB2D8"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center space-x-1 sm:space-x-2"
+  }, user.canAdminAuth && !user.isAdmin && /*#__PURE__*/React.createElement("button", {
+    "aria-label": "\uC0C8\uB85C\uACE0\uCE68",
+    onClick: handleAdminAuth,
+    className: "p-1.5 sm:px-3 sm:py-2 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95",
+    title: "\uAD00\uB9AC\uC790 \uC778\uC99D"
+  }, /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    className: "w-4 h-4 sm:hidden",
+    viewBox: "0 0 20 20",
+    fill: "currentColor"
+  }, /*#__PURE__*/React.createElement("path", {
+    fillRule: "evenodd",
+    d: "M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z",
+    clipRule: "evenodd"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\uAD00\uB9AC\uC790 \uC778\uC99D")), user.isAdmin && /*#__PURE__*/React.createElement("span", {
+    className: "px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] sm:text-[11px] font-bold"
+  }, "\uAD00\uB9AC\uC790"), user.isAdmin && /*#__PURE__*/React.createElement("button", {
+    "aria-label": "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815",
+    onClick: handleSetAnnouncement,
+    className: "p-1.5 sm:px-3 sm:py-2 bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95",
+    title: "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815"
+  }, "\uD83D\uDCE2", /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\uC548\uB0B4\uC0AC\uD56D")), /*#__PURE__*/React.createElement("button", {
+    "aria-label": "\uB85C\uADF8\uC544\uC6C3",
+    onClick: () => setShowMyBookings(true),
+    className: "hidden sm:flex relative items-center px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition"
+  }, "Me", myBookings.length > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "ml-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px]"
+  }, myBookings.length)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => fetchBookings(false),
+    className: "p-2 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5",
+    title: "\uC0C8\uB85C\uACE0\uCE68"
+  }, /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    className: "w-4 h-4 transition-transform active:rotate-180",
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: "2.5"
+  }, /*#__PURE__*/React.createElement("path", {
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    d: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\uC0C8\uB85C\uACE0\uCE68")), /*#__PURE__*/React.createElement("button", {
+    onClick: handleLogout,
+    className: "p-2 sm:px-2.5 sm:py-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition active:scale-95 flex items-center justify-center",
+    title: "\uB85C\uADF8\uC544\uC6C3"
+  }, /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    className: "w-4 h-4 sm:hidden",
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }, /*#__PURE__*/React.createElement("path", {
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    d: "M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\uB85C\uADF8\uC544\uC6C3"))))), notice && /*#__PURE__*/React.createElement("div", {
+    role: "status",
+    className: "shrink-0 bg-sky-50 dark:bg-sky-900/30 border-b border-sky-200 dark:border-sky-800 px-4 py-2 flex items-start gap-2 text-xs sm:text-sm text-sky-800 dark:text-sky-200"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "shrink-0"
+  }, "\uD83D\uDCE2"), /*#__PURE__*/React.createElement("span", {
+    className: "flex-1 whitespace-pre-line break-words font-medium"
+  }, notice)), /*#__PURE__*/React.createElement("main", {
+    className: "flex-none sm:flex-1 w-full p-2 sm:p-4 pb-20 sm:pb-4 min-h-0 flex flex-col relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "md:hidden shrink-0 mb-2 space-y-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between gap-3 shadow-sm select-none"
+  }, isFetchingStatus ? /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col items-center justify-center min-h-[40px] w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-indicator scale-75"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }))) : /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between gap-3 w-full"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 min-w-0"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: `w-2.5 h-2.5 rounded-full shrink-0 ${currentBooking ? 'bg-red-500' : 'bg-emerald-500'}`
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, currentBooking ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-900 dark:text-white"
+  }, "\uD604\uC7AC \uC0AC\uC6A9 \uC911"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5"
+  }, currentBooking.extendedProps?.dept, " ", ' · ', " ", formatClock(currentBooking.start), " ", ' ~ ', " ", formatClock(currentBooking.end))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-emerald-600 dark:text-emerald-400"
+  }, "\uD604\uC7AC \uB300\uC5EC \uAC00\uB2A5"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 mt-0.5"
+  }, "\uD604\uC7AC \uC608\uC57D\uB41C \uC0AC\uC6A9\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.")))), nextBooking && /*#__PURE__*/React.createElement("div", {
+    className: "text-right shrink-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-[10px] text-slate-400"
+  }, "\uB2E4\uC74C \uC608\uC57D"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5"
+  }, formatShortDate(nextBooking.start), " ", formatClock(nextBooking.start)))))), user.isAdmin && /*#__PURE__*/React.createElement("div", {
+    className: "shrink-0 mb-2 sm:mb-3 flex gap-1.5 overflow-x-auto pb-1 select-none"
+  }, [{
+    key: '전체',
+    label: '전체'
+  }, {
+    key: '간호부',
+    label: '간호부'
+  }, {
+    key: 'QI(적정진료관리팀)',
+    label: 'QI'
+  }, {
+    key: '총무팀',
+    label: '총무팀'
+  }, {
+    key: '학생실습비',
+    label: '학생실습비'
+  }, {
+    key: '기타',
+    label: '기타'
+  }].map(item => /*#__PURE__*/React.createElement("button", {
+    key: item.key,
+    onClick: () => setBudgetFilter(item.key),
+    className: `shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${budgetFilter === item.key ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`
+  }, item.label))), /*#__PURE__*/React.createElement("div", {
+    className: "shrink-0 mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-slate-500 dark:text-slate-400",
+    "aria-label": "\uCE98\uB9B0\uB354 \uBC94\uB840"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "inline-flex items-center gap-1.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-blue-500"
+  }), "Me"), /*#__PURE__*/React.createElement("span", {
+    className: "inline-flex items-center gap-1.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-slate-400"
+  }), "\uB2E4\uB978 \uC608\uC57D"), /*#__PURE__*/React.createElement("span", {
+    className: "inline-flex items-center gap-1.5"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "w-2 h-2 rounded-full bg-red-400"
+  }), "\uC8FC\uB9D0\xB7\uACF5\uD734\uC77C"), /*#__PURE__*/React.createElement("span", {
+    className: "ml-auto hidden sm:inline text-slate-400 dark:text-slate-500"
+  }, "\uB0A0\uC9DC\uB97C \uC120\uD0DD\uD558\uBA74 \uC608\uC57D\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4")), /*#__PURE__*/React.createElement("div", {
+    className: "h-[620px] sm:h-full shrink-0 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-4 relative transition-colors duration-200 overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: calendarContainerRef,
+    id: "calendar",
+    className: "w-full h-full"
+  })), loading && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white/95 dark:bg-slate-800/95 px-8 py-6 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col items-center gap-3 select-none"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-indicator scale-90"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold text-slate-700 dark:text-slate-200"
+  }, "\uCC98\uB9AC \uC911\uC785\uB2C8\uB2E4...")))), showMyBookings && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "my-bookings-title",
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]",
+    onClick: () => setShowMyBookings(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h3", {
+    id: "my-bookings-title",
+    className: "font-bold text-slate-900 dark:text-white"
+  }, "Me"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mt-0.5"
+  }, "\uC608\uC815\uB41C \uC608\uC57D ", myBookings.length, "\uAC74")), /*#__PURE__*/React.createElement("button", {
+    "aria-label": "Me \uB2EB\uAE30",
+    onClick: () => setShowMyBookings(false),
+    className: "w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 text-xl"
+  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
+    className: "max-h-[60vh] overflow-y-auto"
+  }, myBookings.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "py-14 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-3xl mb-3"
+  }, "\uD83D\uDCC5"), /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-semibold text-slate-600 dark:text-slate-300"
+  }, "\uC608\uC815\uB41C \uC608\uC57D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-slate-400 mt-1"
+  }, "\uCE98\uB9B0\uB354\uC5D0\uC11C \uC6D0\uD558\uB294 \uB0A0\uC9DC\uB97C \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.")) : myBookings.map(ev => /*#__PURE__*/React.createElement("button", {
+    key: ev.id,
+    onClick: () => {
+      setShowMyBookings(false);
+      openBookingById(ev.id, new Date(ev.start), new Date(ev.end));
+    },
+    className: "w-full text-left px-5 py-4 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "min-w-0"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-bold text-slate-800 dark:text-white"
+  }, ev.extendedProps?.dept), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-500 dark:text-slate-400 mt-1"
+  }, formatShortDate(ev.start), " ", formatClock(ev.start), " ~", formatShortDate(ev.end) !== formatShortDate(ev.start) ? ` ${formatShortDate(ev.end)} ` : ' ', formatClock(ev.end)), ev.extendedProps?.purpose && /*#__PURE__*/React.createElement("div", {
+    className: "text-xs text-slate-400 mt-1.5 truncate"
+  }, ev.extendedProps.purpose)), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-300 dark:text-slate-600"
+  }, " \u203A"))))), /*#__PURE__*/React.createElement("div", {
+    className: "p-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowMyBookings(false),
+    className: "w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-sm font-medium text-slate-600 dark:text-slate-200"
+  }, "\uB2EB\uAE30")))), showListModal && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "date-bookings-title",
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700"
+  }, /*#__PURE__*/React.createElement("h3", {
+    id: "date-bookings-title",
+    className: "font-bold mb-4 text-slate-900 dark:text-white"
+  }, selectedSlot?.startDate, " \uC608\uC57D \uBAA9\uB85D"), selectedDateReservations.length > 0 ? selectedDateReservations.map(ev => {
+    const formatTime = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const formatDate = d => String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+    const isSameDay = ev.startObj.toDateString() === ev.endObj.toDateString();
+    const timeDisplay = isSameDay ? `${formatTime(ev.startObj)} ~ ${formatTime(ev.endObj)}` : `${formatDate(ev.startObj)} ${formatTime(ev.startObj)} ~ ${formatDate(ev.endObj)} ${formatTime(ev.endObj)}`;
+    return /*#__PURE__*/React.createElement("div", {
+      key: ev.id,
+      onClick: () => openBookingById(ev.id, ev.startObj, ev.endObj),
+      className: "p-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-sm flex flex-col gap-1 transition-colors"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold text-blue-700 dark:text-blue-400"
+    }, ev.title), /*#__PURE__*/React.createElement("span", {
+      className: "text-slate-500 dark:text-slate-400 text-xs"
+    }, timeDisplay));
+  }) : /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 dark:text-slate-400 text-sm text-center py-4"
+  }, "\uC608\uC57D\uB41C \uB0B4\uC5ED\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2 mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setShowListModal(false);
+      calendarInstanceRef.current?.unselect();
+    },
+    className: "flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 py-3 rounded-xl font-medium transition text-sm"
+  }, "Back"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setSelectedEvent(null);
+      setShowListModal(false);
+      setShowNotice(true);
+    },
+    className: "flex-[2] bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl shadow-md font-medium transition text-sm"
+  }, "+ \uC2E0\uADDC \uC608\uC57D")))), showNotice && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "notice-title",
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl p-6 border border-slate-100 dark:border-slate-700"
+  }, /*#__PURE__*/React.createElement("h3", {
+    id: "notice-title",
+    className: "text-lg font-bold text-slate-900 dark:text-white mb-4"
+  }, "\uBC95\uC778\uCE74\uB4DC \uB300\uC5EC \uC0AC\uC804 \uC720\uC758\uC0AC\uD56D"), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 dark:bg-slate-900 rounded-xl p-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 space-y-3"
+  }, /*#__PURE__*/React.createElement("p", null, "\u2022 \uBC95\uC778\uCE74\uB4DC \uACB0\uC81C \uC601\uC218\uC99D\uC740 A4 \uC6A9\uC9C0\uC5D0 \uBD80\uCC29\uD558\uC5EC \uC81C\uCD9C \uBD80\uD0C1\uB4DC\uB9BD\uB2C8\uB2E4.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("span", {
+    className: "text-blue-600 dark:text-blue-400"
+  }, "(\uCE74\uB4DC\uBC88\uD638 \uB4B7\uC790\uB9AC 4\uC790\uB9AC \uAE30\uC785, \uC0AC\uC6A9 \uBD80\uC11C \uBC0F \uC6A9\uB3C4, \uAC70\uB798\uB0B4\uC5ED \uD45C\uAE30 \uD544\uC218)")), /*#__PURE__*/React.createElement("p", null, "\u2022 \uACB0\uC81C \uC601\uC218\uC99D\uC740 \uC0AC\uC6A9\uC6D4 \uAE30\uC900 \uC775\uC6D4 10\uC77C\uAE4C\uC9C0 \uC81C\uCD9C \uD544\uC218"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-semibold text-red-600 dark:text-red-400 mb-1"
+  }, "\u2022 \uBC95\uC778\uCE74\uB4DC \uC0AC\uC6A9 \uC81C\uD55C \uD56D\uBAA9"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "- \uBC31\uD654\uC810 \uC0C1\uD488\uAD8C, \uC8FC\uC720 \uC0C1\uD488\uAD8C, \uBB38\uD654(\uB3C4\uC11C)\uC0C1\uD488\uAD8C \uBC0F \uAE30\uD0C0 \uC0C1\uD488\uAD8C \uB4F1"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "- \uC120\uBD88\uCE74\uB4DC \uBC0F \uC804\uC790\uC0C1\uD488\uAD8C(\uAE30\uD504\uD2B8\uCE74\uB4DC \uB4F1) \uAD6C\uB9E4 \uBC0F \uCDA9\uC804"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "- \uC120\uBB3C\uC138\uD2B8 \uAD6C\uC785 (\uAD6C\uB9E4\uB0B4\uC5ED \uC0C1 '\uC120\uBB3C\uC138\uD2B8' \uD3EC\uD568 \uC2DC\uC5D0\uB3C4 \uD574\uB2F9)"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex space-x-3"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setShowNotice(false);
+      calendarInstanceRef.current?.unselect();
+    },
+    className: "flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 font-medium py-3 rounded-xl transition text-sm"
+  }, "\uCDE8\uC18C"), /*#__PURE__*/React.createElement("button", {
+    onClick: confirmNotice,
+    className: "flex-1 bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-xl transition text-sm"
+  }, "\uC720\uC758\uC0AC\uD56D \uD655\uC778 \uC644\uB8CC")))), showForm && selectedSlot && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "booking-form-title",
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 my-4 relative"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center mb-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    id: "booking-form-title",
+    className: "text-lg font-bold text-slate-900 dark:text-white"
+  }, formData.id ? "예약 상세 정보" : "신규 법인카드 예약 신청"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    "aria-label": "\uC608\uC57D \uCC3D \uB2EB\uAE30",
+    onClick: () => {
+      setShowForm(false);
+      calendarInstanceRef.current?.unselect();
+    },
+    className: "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 text-xl transition-colors"
+  }, "\xD7")), /*#__PURE__*/React.createElement("form", {
+    onSubmit: handleSubmit,
+    className: "space-y-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uB300\uC5EC \uBD80\uC11C"), /*#__PURE__*/React.createElement("select", {
+    autoFocus: !formData.id,
+    disabled: !hasPermission,
+    value: deptSelect,
+    onChange: e => setDeptSelect(e.target.value),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "\uC120\uD0DD",
+    disabled: true
+  }, "\uC120\uD0DD"), DEPARTMENTS.map(dept => /*#__PURE__*/React.createElement("option", {
+    key: dept,
+    value: dept
+  }, dept)), /*#__PURE__*/React.createElement("option", {
+    value: "\uC9C1\uC811 \uC785\uB825"
+  }, "\uC9C1\uC811 \uC785\uB825 (\uAC80\uC0C9)")), deptSelect === '직접 입력' && /*#__PURE__*/React.createElement("div", {
+    className: "mt-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    list: "dept-datalist",
+    disabled: !hasPermission,
+    required: true,
+    value: deptCustom,
+    onChange: e => setDeptCustom(e.target.value),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors",
+    placeholder: "\uBD80\uC11C\uBA85\uC744 \uC785\uB825\uD558\uAC70\uB098 \uBAA9\uB85D\uC5D0\uC11C \uC120\uD0DD"
+  }), /*#__PURE__*/React.createElement("datalist", {
+    id: "dept-datalist"
+  }, DEPARTMENTS.map(dept => /*#__PURE__*/React.createElement("option", {
+    key: `dl-${dept}`,
+    value: dept
+  }))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uC0AC\uC6A9 \uC608\uC0B0 \uAD6C\uBD84"), /*#__PURE__*/React.createElement("select", {
+    disabled: !hasPermission,
+    value: budgetSelect,
+    onChange: e => setBudgetSelect(e.target.value),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "\uC120\uD0DD",
+    disabled: true
+  }, "\uC120\uD0DD"), /*#__PURE__*/React.createElement("option", {
+    value: "\uAC04\uD638\uBD80"
+  }, "\uAC04\uD638\uBD80"), /*#__PURE__*/React.createElement("option", {
+    value: "QI(\uC801\uC815\uC9C4\uB8CC\uAD00\uB9AC\uD300)"
+  }, "QI(\uC801\uC815\uC9C4\uB8CC\uAD00\uB9AC\uD300)"), /*#__PURE__*/React.createElement("option", {
+    value: "\uCD1D\uBB34\uD300"
+  }, "\uCD1D\uBB34\uD300"), /*#__PURE__*/React.createElement("option", {
+    value: "\uD559\uC0DD\uC2E4\uC2B5\uBE44"
+  }, "\uD559\uC0DD\uC2E4\uC2B5\uBE44"), /*#__PURE__*/React.createElement("option", {
+    value: "\uAE30\uD0C0"
+  }, "\uAE30\uD0C0")), budgetSelect === '기타' && /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    disabled: !hasPermission,
+    required: true,
+    value: budgetCustom,
+    onChange: e => setBudgetCustom(e.target.value),
+    className: "w-full mt-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors",
+    placeholder: "\uC815\uD655\uD55C \uBD80\uC11C\uBA85 \uAE30\uC785"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 sm:grid-cols-2 gap-4"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uB300\uC5EC\uC790 \uC774\uB984"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    disabled: true,
+    required: true,
+    value: formData.name,
+    onChange: e => setFormData({
+      ...formData,
+      name: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uB300\uC5EC\uC790 \uC0AC\uBC88"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    disabled: true,
+    required: true,
+    value: formData.empNo,
+    onChange: e => setFormData({
+      ...formData,
+      empNo: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 sm:grid-cols-2 gap-4 w-full overflow-hidden"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uB300\uC5EC \uC2DC\uC791\uC77C \uBC0F \uC2DC\uAC04"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)] gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    disabled: !hasPermission,
+    required: true,
+    value: formData.startDate,
+    onChange: e => handleStartDateChange(e.target.value),
+    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }), /*#__PURE__*/React.createElement("select", {
+    disabled: !hasPermission,
+    required: true,
+    value: formData.startTimePart,
+    onChange: e => handleStartTimeChange(e.target.value),
+    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "",
+    disabled: true
+  }, "\uC120\uD0DD"), TIME_OPTIONS.map(time => /*#__PURE__*/React.createElement("option", {
+    key: `start-${time}`,
+    value: time
+  }, time))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uBC18\uB0A9 \uC608\uC815\uC77C \uBC0F \uC2DC\uAC04"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)] gap-2"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    disabled: !hasPermission,
+    required: true,
+    value: formData.endDate,
+    onChange: e => setFormData({
+      ...formData,
+      endDate: e.target.value
+    }),
+    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }), /*#__PURE__*/React.createElement("select", {
+    disabled: !hasPermission,
+    required: true,
+    value: formData.endTimePart,
+    onChange: e => setFormData({
+      ...formData,
+      endTimePart: e.target.value
+    }),
+    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "",
+    disabled: true
+  }, "\uC120\uD0DD"), TIME_OPTIONS.map(time => /*#__PURE__*/React.createElement("option", {
+    key: `end-${time}`,
+    value: time
+  }, time)))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uC0AC\uC6A9 \uC6A9\uB3C4 (\uC0AC\uC5C5\uBA85 \uB610\uB294 \uC0AC\uC5C5\uACC4\uD68D\uC11C\uBA85)"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    disabled: !hasPermission,
+    required: true,
+    value: formData.purpose,
+    onChange: e => setFormData({
+      ...formData,
+      purpose: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors",
+    placeholder: "\uBAA9\uC801\uC744 \uBA85\uD655\uD788 \uAE30\uC785\uD574\uC8FC\uC138\uC694."
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uC138\uBD80 \uB0B4\uC6A9 (\uC120\uD0DD\uC0AC\uD56D)"), /*#__PURE__*/React.createElement("textarea", {
+    disabled: !hasPermission,
+    value: formData.details,
+    onChange: e => setFormData({
+      ...formData,
+      details: e.target.value
+    }),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm h-16 focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors",
+    placeholder: "\uD544\uC694\uC2DC \uAE30\uC785"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
+  }, "\uC5F0\uB77D\uCC98 (\uD734\uB300\uD3F0 \uBC88\uD638)"), hasPermission ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center space-x-2"
+  }, /*#__PURE__*/React.createElement("select", {
+    value: phone1Select,
+    onChange: e => setPhone1Select(e.target.value),
+    className: "w-24 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500"
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "010"
+  }, "010"), /*#__PURE__*/React.createElement("option", {
+    value: "011"
+  }, "011"), /*#__PURE__*/React.createElement("option", {
+    value: "016"
+  }, "016"), /*#__PURE__*/React.createElement("option", {
+    value: "\uAE30\uD0C0"
+  }, "\uC9C1\uC811 \uC785\uB825")), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400 dark:text-slate-500"
+  }, "-"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    required: true,
+    maxLength: "4",
+    value: phone2,
+    onChange: e => setPhone2(e.target.value.replace(/[^0-9]/g, '')),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:border-blue-600"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-slate-400 dark:text-slate-500"
+  }, "-"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    required: true,
+    maxLength: "4",
+    value: phone3,
+    onChange: e => setPhone3(e.target.value.replace(/[^0-9]/g, '')),
+    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:border-blue-600"
+  })), phone1Select === '기타' && /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    required: true,
+    maxLength: "4",
+    value: phone1Custom,
+    onChange: e => setPhone1Custom(e.target.value.replace(/[^0-9]/g, '')),
+    className: "w-24 mt-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm text-center",
+    placeholder: "\uBC88\uD638 \uC785\uB825"
+  })) : /*#__PURE__*/React.createElement("div", {
+    className: "rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between gap-3"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "text-sm font-semibold text-slate-700 dark:text-slate-200"
+  }, selectedEvent?.contactRevealed ? selectedEvent.contact : selectedEvent?.contactMasked || '연락처 비공개'), !selectedEvent?.contactRevealed && /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] text-slate-400 mt-1"
+  }, "\uD544\uC694\uD55C \uACBD\uC6B0\uC5D0\uB9CC \uC5F0\uB77D\uCC98\uB97C \uD655\uC778\uD574 \uC8FC\uC138\uC694.")), !selectedEvent?.contactRevealed && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: async () => {
+      setLoading(true);
+      try {
+        const data = await callApi({
+          action: 'GET_CONTACT',
+          token: user.token,
+          id: selectedEvent.id
+        });
+        setSelectedEvent(prev => ({
+          ...prev,
+          contact: data.contact,
+          contactRevealed: true
+        }));
+        showToast('연락처가 표시되었습니다.');
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    className: "shrink-0 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
+  }, "\uC5F0\uB77D\uCC98 \uBCF4\uAE30")))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2 pt-4 border-t border-slate-100 dark:border-slate-700 mt-4"
+  }, formData.id && hasPermission && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: handleDelete,
+    className: "flex-1 sm:flex-none whitespace-nowrap bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 font-medium px-3 py-2.5 rounded-xl text-xs sm:text-sm transition"
+  }, "\uC608\uC57D \uCDE8\uC18C"), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex gap-2 justify-end w-full sm:w-auto"
+  }, user.isAdmin && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: async () => {
+      const rangeDates = getDateRangeList(selectedSlot.startDate, selectedSlot.endDate);
+      const isUnavailable = rangeDates.every(d => !!customHolidays[d]);
+      const targetBlocked = !isUnavailable;
+      setLoading(true);
+      try {
+        // ⚡ TOGGLE_HOLIDAY는 날짜별 on/off를 반전시키므로, 이미 원하는 상태인 날짜는 건너뛴다
+        // (건너뛰지 않으면 범위 안에서 이미 막혀있던 날짜가 되려 해제돼 버린다)
+        for (const d of rangeDates) {
+          if (!!customHolidays[d] === targetBlocked) continue;
+          await callApi({
+            action: "TOGGLE_HOLIDAY",
+            token: user.token,
+            date: d,
+            name: targetBlocked ? UNAVAILABLE_PERIOD_LABEL : ""
+          });
+        }
+        setTimeout(async () => {
+          await fetchBookings();
+          calendarInstanceRef.current?.render();
+          setLoading(false);
+          alert(isUnavailable ? "예약 불가 기간이 해제되었습니다." : "예약 불가 기간으로 지정되었습니다.");
+        }, 1500);
+        setShowForm(false);
+      } catch (e) {
+        alert("오류가 발생했습니다.");
+        setLoading(false);
+      }
+    },
+    className: `flex-1 sm:flex-none whitespace-nowrap px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition ${getDateRangeList(selectedSlot.startDate, selectedSlot.endDate).every(d => !!customHolidays[d]) ? "bg-amber-600 hover:bg-amber-700 text-white" : "bg-purple-600 hover:bg-purple-700 text-white"}`
+  }, getDateRangeList(selectedSlot.startDate, selectedSlot.endDate).every(d => !!customHolidays[d]) ? "예약 불가 해제" : "예약 불가 지정"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => {
+      setShowForm(false);
+      calendarInstanceRef.current?.unselect();
+    },
+    className: "flex-1 sm:flex-none whitespace-nowrap px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+  }, "\uCDE8\uC18C"), hasPermission && /*#__PURE__*/React.createElement("button", {
+    type: "submit",
+    disabled: loading,
+    className: `flex-1 sm:flex-none whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition ${loading ? 'bg-gray-400 dark:bg-slate-600 cursor-not-allowed text-white' : 'bg-blue-700 text-white hover:bg-blue-800 dark:hover:bg-blue-600'}`
+  }, loading ? '저장 중...' : '저장')))))), showInstruction && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "instruction-title",
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]",
+    onClick: () => setShowInstruction(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl p-6 border border-slate-100 dark:border-slate-700",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("h3", {
+    id: "instruction-title",
+    className: "text-lg font-bold text-slate-900 dark:text-white mb-4"
+  }, "\uBC95\uC778\uCE74\uB4DC \uC608\uC57D \uC2DC\uC2A4\uD15C \uC774\uC6A9 \uC548\uB0B4"), /*#__PURE__*/React.createElement("div", {
+    className: "bg-slate-50 dark:bg-slate-900 rounded-xl p-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 space-y-4 max-h-[60vh] overflow-y-auto"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-blue-600 dark:text-blue-400 mb-1"
+  }, "[\uC608\uC57D \uBC0F \uC774\uC6A9]"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uCE98\uB9B0\uB354 \uD574\uB2F9 \uB0A0\uC9DC\uC758 \uBE48 \uACF5\uAC04 \uD074\uB9AD\uD558\uC5EC \uC608\uC57D \uC2E0\uCCAD"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uAE30\uC874 \uC608\uC57D\uACFC \uBBF8\uC911\uBCF5 \uC2DC \uCD94\uAC00 \uC608\uC57D \uAC00\uB2A5"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uB300\uC5EC \uBC0F \uBC18\uB0A9: \uD3C9\uC77C 08:30 ~ 17:30")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-red-600 dark:text-red-400 mb-1"
+  }, "[\uC608\uC57D \uC81C\uD55C]"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uC608\uC57D \uAC00\uB2A5 \uAE30\uD55C: \uC2E0\uCCAD\uC77C \uAE30\uC900 2\uAC1C\uC6D4 \uC774\uB0B4"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uC8FC\uB9D0 \uBC0F \uACF5\uD734\uC77C \uC608\uC57D \uBD88\uAC00"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uCD5C\uB300 \uB300\uC5EC: \uD3C9\uC77C \uAE30\uC900 3\uC77C (\uC7A5\uAE30 \uB300\uC5EC \uC0AC\uC804 \uBB38\uC758)")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    className: "font-bold text-emerald-600 dark:text-emerald-400 mb-1"
+  }, "[\uC218\uC815 \uBC0F \uCDE8\uC18C]"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uBCF8\uC778 \uC608\uC57D \uB0B4\uC5ED \uD074\uB9AD \uC2DC \uC218\uC815 \uAC00\uB2A5"), /*#__PURE__*/React.createElement("p", {
+    className: "pl-2"
+  }, "\u2022 \uBCF8\uC778 \uC608\uC57D \uAC74\uC5D0 \uD55C\uD558\uC5EC \uCDE8\uC18C \uAC00\uB2A5"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowInstruction(false),
+    className: "w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-xl transition text-sm shadow-md"
+  }, "\uC548\uB0B4\uC0AC\uD56D\uC744 \uD655\uC778\uD588\uC2B5\uB2C8\uB2E4"))), feedbackDialog && /*#__PURE__*/React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-labelledby": "feedback-dialog-title",
+    className: "fixed inset-0 bg-slate-950/45 backdrop-blur-sm flex items-center justify-center p-4 z-[10000]"
+  }, /*#__PURE__*/React.createElement("form", {
+    onSubmit: event => {
+      event.preventDefault();
+      closeFeedbackDialog(feedbackDialog.kind === 'prompt' ? feedbackDialog.value : true);
+    },
+    className: "w-full max-w-sm rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl p-5"
+  }, /*#__PURE__*/React.createElement("h3", {
+    id: "feedback-dialog-title",
+    className: "text-base font-bold text-slate-900 dark:text-white"
+  }, "\uC548\uB0B4"), /*#__PURE__*/React.createElement("p", {
+    className: "mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300 whitespace-pre-line"
+  }, feedbackDialog.message), feedbackDialog.kind === 'prompt' && /*#__PURE__*/React.createElement("input", {
+    autoFocus: true,
+    type: "password",
+    value: feedbackDialog.value,
+    onChange: event => setFeedbackDialog(prev => ({
+      ...prev,
+      value: event.target.value
+    })),
+    className: "mt-4 w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+    placeholder: "PIN \uC785\uB825"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "mt-5 flex gap-2 justify-end"
+  }, (feedbackDialog.kind === 'confirm' || feedbackDialog.kind === 'prompt') && /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => closeFeedbackDialog(feedbackDialog.kind === 'prompt' ? null : false),
+    className: "flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-600 transition"
+  }, "\uCDE8\uC18C"), /*#__PURE__*/React.createElement("button", {
+    type: "submit",
+    autoFocus: feedbackDialog.kind !== 'prompt',
+    className: "flex-1 px-4 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold transition"
+  }, feedbackDialog.kind === 'confirm' ? '확인' : feedbackDialog.kind === 'prompt' ? '인증하기' : '확인')))), toast && /*#__PURE__*/React.createElement("div", {
+    role: "status",
+    "aria-live": "polite",
+    className: "fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-[99999]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: `flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl border text-sm font-semibold ${toast.type === 'error' ? 'bg-red-600 border-red-500 text-white' : toast.type === 'warning' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-slate-900 dark:bg-white border-slate-800 dark:border-white text-white dark:text-slate-900'}`
+  }, /*#__PURE__*/React.createElement("span", null, toast.type === 'error' ? '✕' : toast.type === 'warning' ? '!' : '✓'), toast.message)), /*#__PURE__*/React.createElement("div", {
+    className: "sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-200 dark:border-slate-700 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-3 gap-1"
+  }, /*#__PURE__*/React.createElement("button", {
+    "aria-label": "\uB2EC\uB825 \uBCF4\uAE30",
+    onClick: () => {
+      if (!calendarInstanceRef.current) return;
+      calendarInstanceRef.current.changeView('dayGridMonth');
+    },
+    className: "flex flex-col items-center justify-center gap-1 py-1 text-slate-500 dark:text-slate-300"
+  }, /*#__PURE__*/React.createElement("svg", {
+    className: "w-5 h-5",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "4",
+    width: "18",
+    height: "17",
+    rx: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M8 2v4M16 2v4M3 10h18"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-medium"
+  }, "\uB2EC\uB825")), /*#__PURE__*/React.createElement("button", {
+    "aria-label": "\uC624\uB298 \uBCF4\uAE30",
+    onClick: () => {
+      if (!calendarInstanceRef.current) return;
+      calendarInstanceRef.current.today();
+      calendarInstanceRef.current.changeView('timeGridDay');
+    },
+    className: "flex flex-col items-center justify-center gap-1 py-1 text-blue-600 dark:text-blue-400"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-[10px] font-bold"
+  }, currentTime.getDate()), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-semibold"
+  }, "\uC624\uB298")), /*#__PURE__*/React.createElement("button", {
+    "aria-label": "Me \uC608\uC57D \uBCF4\uAE30",
+    onClick: () => setShowMyBookings(true),
+    className: "relative flex flex-col items-center justify-center gap-1 py-1 text-slate-500 dark:text-slate-300"
+  }, /*#__PURE__*/React.createElement("svg", {
+    className: "w-5 h-5",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M8 7V3m8 4V3"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "5",
+    width: "18",
+    height: "16",
+    rx: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3 11h18"
+  })), myBookings.length > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "absolute top-0 right-[28%] min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center"
+  }, myBookings.length), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] font-medium"
+  }, "Me")))), /*#__PURE__*/React.createElement("div", {
+    className: "absolute bottom-14 sm:bottom-3 right-3 sm:right-4 z-[40] text-right pointer-events-none opacity-80 select-none"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-[10px] font-medium text-slate-400 dark:text-slate-500"
+  }, "\xA9 vico.yj All rights reserved. ", /*#__PURE__*/React.createElement("span", {
+    className: "mx-1 text-slate-300 dark:text-slate-600"
+  }, "|"), " codeyj@duck.com")));
+}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render( /*#__PURE__*/React.createElement(App, null));
+    </script>
+</body>
+
+</html>

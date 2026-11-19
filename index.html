@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DNS > Card-Portal</title>
 
     <!-- ⚡ 성능 최적화를 위한 CDN Preconnect -->
@@ -137,15 +137,46 @@
            3. 세련된 모던 캘린더 UI 스타일 (Apple/Notion 스타일)
         ------------------------------------------------------------- */
         .fc {
-            --fc-border-color: #f1f5f9;
+            --fc-border-color: #e4e9f0;
             --fc-today-bg-color: transparent;
             --fc-neutral-bg-color: transparent;
             background: #ffffff;
-            padding: 0.85rem 1rem;
+            padding: 0.5rem 0.6rem;
             border-radius: 1.25rem;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+            border: 0;
+            box-shadow: none;
             height: 100%;
+        }
+
+        /* ⚡ 팝업/목록 안의 스크롤바: 둥근 모서리 바깥으로 튀어나오는 굵은 기본 스크롤바 대신 얇고 은은한 막대로 */
+        @supports not selector(::-webkit-scrollbar) {
+            .soft-scroll,
+            .fc-multimonth {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+            }
+        }
+        .soft-scroll::-webkit-scrollbar,
+        .fc-multimonth::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .soft-scroll::-webkit-scrollbar-track,
+        .fc-multimonth::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 16px 0;
+        }
+        .soft-scroll::-webkit-scrollbar-thumb,
+        .fc-multimonth::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.55);
+            border-radius: 9999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        .soft-scroll::-webkit-scrollbar-thumb:hover,
+        .fc-multimonth::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.75);
+            background-clip: content-box;
         }
 
         /* ⚡ 캘린더 내부 스크롤바 투명화 (투박한 스크롤바 제거) */
@@ -164,9 +195,61 @@
             height: 0 !important;
         }
 
+        /* PC 월 보기(끊김 없이 이어지는 주 단위 달력): 한 주의 최소 높이, 얇은 스크롤바 */
+        .fc-dayGridContinuous-view .fc-daygrid-day-frame {
+            min-height: 96px;
+        }
+        .fc-dayGridContinuous-view .fc-scroller::-webkit-scrollbar {
+            display: block !important;
+            width: 8px !important;
+        }
+        .fc-dayGridContinuous-view .fc-scroller::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 8px 0;
+        }
+        .fc-dayGridContinuous-view .fc-scroller::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.55);
+            border-radius: 9999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        .fc-dayGridContinuous-view .fc-scroller::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.75);
+            background-clip: content-box;
+        }
+        /* 매달 1일 칸은 "11월 1일"처럼 달이 바뀌는 지점을 알려주므로 숫자를 굵게 */
+        .fc-dayGridContinuous-view .fc-first-of-month .fc-day-num {
+            font-weight: 800 !important;
+        }
+
         /* 툴바 & 타이틀 */
+        .fc .fc-legend-button {
+            display: none !important;
+            background: none !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            pointer-events: none;
+            cursor: default;
+            padding: 0 0 0 0.5rem !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            color: #94a3b8 !important;
+            text-transform: none !important;
+            white-space: nowrap;
+            gap: 0.75rem;
+        }
+        @media (min-width: 640px) {
+            .fc .fc-legend-button { display: inline-flex !important; align-items: center; }
+        }
+        /* 범례/숨김 버튼 때문에 양쪽 묶음 너비가 달라도 월 제목이 밀리지 않도록 툴바 정중앙에 고정 (PC·모바일 공통) */
+        .fc .fc-header-toolbar { position: relative; }
+        .fc .fc-header-toolbar > .fc-toolbar-chunk:nth-child(2) {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
         .fc .fc-toolbar {
-            margin-bottom: 0.85rem !important;
+            margin-bottom: 0.5rem !important;
             gap: 0.75rem;
         }
 
@@ -231,24 +314,29 @@
             color: #2563eb !important;
         }
 
-        /* ⚡ 요일별 비대칭 너비: 평일(월~금) 와이드 17%, 주말(토/일) 슬림 7.5% */
-        .fc-col-header-cell.fc-day-sun,
+        /* ⚡ 요일별 비대칭 너비: 평일(월~금) 와이드 17%, 주말(토/일) 슬림 7.5%
+           월 보기에만 적용한다. 하루/주 보기(시간표)의 머리글에 적용되면 머리글 칸이 17% 폭으로 줄어
+           오른쪽으로 밀리고 본문 열과도 어긋난다. */
+        .fc-dayGridMonth-view .fc-col-header-cell.fc-day-sun,
+        .fc-dayGridContinuous-view .fc-col-header-cell.fc-day-sun,
         .fc-daygrid-day.fc-day-sun,
-        .fc-col-header-cell.fc-day-sat,
+        .fc-dayGridMonth-view .fc-col-header-cell.fc-day-sat,
+        .fc-dayGridContinuous-view .fc-col-header-cell.fc-day-sat,
         .fc-daygrid-day.fc-day-sat {
             width: 7.5% !important;
             min-width: 36px;
-            background-color: rgba(248, 250, 252, 0.7);
+            background-color: rgba(15, 23, 42, 0.04);
         }
 
-        .fc-col-header-cell:not(.fc-day-sun):not(.fc-day-sat),
+        .fc-dayGridMonth-view .fc-col-header-cell:not(.fc-day-sun):not(.fc-day-sat),
+        .fc-dayGridContinuous-view .fc-col-header-cell:not(.fc-day-sun):not(.fc-day-sat),
         .fc-daygrid-day:not(.fc-day-sun):not(.fc-day-sat) {
             width: 17% !important;
         }
 
         /* 날짜 셀 */
         .fc-theme-standard td, .fc-theme-standard th {
-            border-color: #f1f5f9;
+            border-color: #e4e9f0;
         }
 
         .fc-scrollgrid {
@@ -337,6 +425,21 @@
             box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5) !important;
         }
 
+        /* 하루/주 보기: 열 전체를 파란 박스로 칠하지 않는다(월 보기의 오늘·선택 표시가 시간표 열에도 번져 화면 전체가 선택된 것처럼 보임).
+           오늘은 머리글 글자색으로만 구분한다. */
+        .fc-timegrid-col.fc-day-today,
+        .fc-timegrid-col.selected-date-cell,
+        .fc-col-header-cell.fc-day-today,
+        .fc-col-header-cell.selected-date-cell {
+            background-color: transparent !important;
+            box-shadow: none !important;
+            border-radius: 0;
+        }
+
+        .fc-col-header-cell.fc-day-today a {
+            color: #2563eb !important;
+        }
+
         /* 오늘 표시 미니 라벨 */
         .fc-today-badge {
             display: inline-flex !important;
@@ -361,10 +464,32 @@
             color: #2563eb !important;
         }
 
+        /* ⚡ 공휴일·예약 불가 기간처럼 예약할 수 없는 날짜 셀은 토/일요일 칸과 똑같은 회색 음영을 쓴다 */
+        .holiday-day,
+        .unavailable-day {
+            background-color: rgba(15, 23, 42, 0.04) !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .holiday-day,
+            .unavailable-day {
+                background-color: rgba(0, 0, 0, 0.2) !important;
+            }
+        }
+
         .fc-highlight {
             background-color: rgba(59, 130, 246, 0.12) !important;
             box-shadow: inset 0 0 0 2px #3b82f6 !important;
             border-radius: 6px;
+        }
+
+        /* ⚡ 모바일에서 날짜를 탭해 하단에 예약 목록이 뜬 동안, 어떤 날짜를 선택했는지 계속 보이도록 하는 표시 */
+        .selected-date-cell {
+            background-color: rgba(59, 130, 246, 0.14) !important;
+            box-shadow: inset 0 0 0 2px #2563eb !important;
+            border-radius: 6px;
+            position: relative;
+            z-index: 1;
         }
 
         /* 모던 이벤트 카드 애니메이션 */
@@ -419,8 +544,21 @@
             .fc-scroller,
             .fc-scroller-liquid-absolute {
                 overscroll-behavior: auto;
-                touch-action: pan-y;
+                touch-action: pan-y !important;
                 overflow-x: hidden !important;
+            }
+
+            /* ⚡ FullCalendar는 날짜 셀(day-frame)에 터치 드래그 선택을 위해 touch-action: none을
+               걸어두는데, selectable을 꺼도 이 값이 남아 있으면 손가락으로 스크롤하려는 동작이
+               그대로 "선택 시도"로 가로채여 전혀 스크롤되지 않는다. 날짜 칸 자체에도 세로 스크롤을
+               명시적으로 허용해 스크롤이 선택 로직보다 우선하도록 강제한다. */
+            .fc-daygrid-day-frame,
+            .fc-daygrid-day-events,
+            .fc-daygrid-day-bg,
+            .fc-daygrid-body,
+            .fc-daygrid-body table,
+            .fc-scrollgrid-sync-table {
+                touch-action: pan-y !important;
             }
 
             .fc,
@@ -450,22 +588,61 @@
             }
 
             .fc {
-                padding: 0.5rem;
-                border-radius: 0.85rem;
+                padding: 0.25rem;
+                border-radius: 1rem;
+            }
+
+            .fc th {
+                padding: 0.25rem 0 !important;
+            }
+
+            /* 하루/주 보기: 왼쪽 시간 열을 좁혀 예약 칸에 폭을 더 준다 */
+            .fc .fc-timegrid-slot-label-cushion,
+            .fc .fc-timegrid-axis-cushion {
+                padding: 0 0.25rem !important;
+                font-size: 0.65rem !important;
+                line-height: 1.1;
+            }
+
+            /* 모바일: 달력을 최대한 크게 — 보기 전환 버튼은 숨긴다(하단 메뉴로 전환 가능) */
+            .fc .fc-header-toolbar {
+                gap: 0.5rem !important;
+                margin-bottom: 0.2rem !important;
+            }
+
+            .fc .fc-header-toolbar > .fc-toolbar-chunk:last-child {
+                display: none !important;
             }
 
             .fc .fc-toolbar-title {
-                font-size: 1.05rem !important;
+                font-size: 0.8rem !important;
+                white-space: nowrap;
+            }
+
+            .fc .fc-toolbar {
+                margin-bottom: 0.4rem !important;
+                gap: 4px !important;
             }
 
             .fc .fc-button {
-                padding: 0.3rem 0.55rem !important;
-                font-size: 0.7rem !important;
+                padding: 0.2rem 0.35rem !important;
+                font-size: 0.6rem !important;
             }
 
             .fc-header-toolbar {
-                flex-wrap: wrap;
-                gap: 6px;
+                flex-wrap: nowrap !important;
+                gap: 4px !important;
+                align-items: center !important;
+            }
+
+            .fc-header-toolbar .fc-toolbar-chunk {
+                min-width: 0;
+                display: flex;
+                align-items: center;
+            }
+
+            .fc-header-toolbar .fc-toolbar-chunk:first-child {
+                gap: 3px;
             }
 
             .fc-col-header-cell.fc-day-sun,
@@ -474,6 +651,22 @@
             .fc-daygrid-day.fc-day-sat {
                 width: 8% !important;
                 min-width: 28px;
+            }
+
+            /* ⚡ 모바일 좁은 칸에서도 '예약불가'/공휴일 텍스트가 잘리지 않도록 글자를 더 작게 축소 */
+            .fc-holiday-name {
+                font-size: 7.5px !important;
+                letter-spacing: -0.04em !important;
+            }
+
+            .fc-day-num {
+                min-width: 15px !important;
+                height: 15px !important;
+                font-size: 0.62rem !important;
+            }
+
+            .fc-daynum-row {
+                gap: 2px !important;
             }
         }
 
@@ -498,7 +691,7 @@
             .fc-daygrid-day.fc-day-sun,
             .fc-col-header-cell.fc-day-sat,
             .fc-daygrid-day.fc-day-sat {
-                background-color: rgba(15, 23, 42, 0.45);
+                background-color: rgba(0, 0, 0, 0.2);
             }
 
             .fc .fc-toolbar-title {
@@ -602,6 +795,81 @@
             .fc-popover-header {
                 background-color: #243247 !important;
                 color: #f8fafc !important;
+            }
+        }
+
+        /* ⚡ PC(640px 이상): 달력 툴바와 요일 머리글을 얇게. 라이트/다크 규칙보다 뒤에 두어 항상 우선한다.
+           버튼은 테두리·배경 없이 글자만 두고, 현재 보기만 파란 굵은 글씨로 구분한다. */
+        @media (min-width: 640px) {
+            .fc th {
+                padding: 0.1rem 0 !important;
+            }
+
+            .fc .fc-col-header-cell-cushion {
+                padding: 2px 4px !important;
+                line-height: 1.2;
+            }
+
+            .fc .fc-toolbar {
+                margin-bottom: 0.2rem !important;
+            }
+
+            .fc .fc-button,
+            .fc .fc-button-primary {
+                background: transparent !important;
+                border-color: transparent !important;
+                box-shadow: none !important;
+                padding: 0.15rem 0.5rem !important;
+                font-size: 0.75rem !important;
+                border-radius: 0.4rem !important;
+            }
+
+            .fc .fc-button:hover {
+                background: rgba(100, 116, 139, 0.12) !important;
+                transform: none !important;
+            }
+
+            .fc .fc-button-group {
+                gap: 0.25rem;
+            }
+
+            .fc .fc-button-group > .fc-button {
+                margin-left: 0 !important;
+            }
+
+            .fc .fc-button .fc-icon {
+                font-size: 1.15em !important;
+            }
+
+            .fc .fc-button-active,
+            .fc .fc-button-primary:not(:disabled).fc-button-active,
+            .fc .fc-button-primary:not(:disabled):active {
+                background: transparent !important;
+                border-color: transparent !important;
+                box-shadow: none !important;
+                color: #2563eb !important;
+                font-weight: 800 !important;
+                text-decoration: underline;
+                text-underline-offset: 5px;
+            }
+
+            .fc .fc-button-primary:disabled {
+                opacity: 0.35;
+            }
+        }
+
+        /* 다크 모드: 일/토 요일 머리글 칸이 라이트 모드용 밝은 회색 배경으로 남지 않게 한다 */
+        @media (prefers-color-scheme: dark) {
+            .fc-col-header-cell.fc-day-sun,
+            .fc-col-header-cell.fc-day-sat {
+                background-color: rgba(0, 0, 0, 0.2) !important;
+            }
+        }
+
+        @media (min-width: 640px) and (prefers-color-scheme: dark) {
+            .fc .fc-button-active,
+            .fc .fc-button-primary:not(:disabled).fc-button-active {
+                color: #60a5fa !important;
             }
         }
     </style>
@@ -820,6 +1088,7 @@
 function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwp5HHDFNuWuwkgfEh0HHmexwwHfaakqUWTe4Z89MrxyIwiXf5QQLoxLwe_096-NRr2zw/exec";
 const UNAVAILABLE_PERIOD_LABEL = "예약 불가 기간";
+const UNAVAILABLE_PERIOD_SHORT_LABEL = "예약불가";
 const NOTICE_SEVERITY_OPTIONS = [{
   key: 'info',
   label: '안내',
@@ -1279,6 +1548,11 @@ function App() {
     if (dateObj.getMonth() === 6 && dateObj.getDate() === 17) return "제헌절";
     return FALLBACK_HOLIDAYS[dateStr] || null;
   };
+  const getDayCellClasses = dateObj => {
+    const holidayName = getHolidayName(dateObj);
+    if (!holidayName) return [];
+    return holidayName === UNAVAILABLE_PERIOD_LABEL ? ['unavailable-day'] : ['holiday-day'];
+  };
   const [loading, setLoading] = React.useState(false);
   const [showListModal, setShowListModal] = React.useState(false);
   const [selectedDateReservations, setSelectedDateReservations] = React.useState([]);
@@ -1287,13 +1561,26 @@ function App() {
   const lastSelectedRef = React.useRef(null);
   const eventsRef = React.useRef(events);
   const lastFetchedTokenRef = React.useRef('__initial__');
+  // ⚡ 캘린더 인스턴스는 로그인 시 1회만 생성하고(관리자 PIN 인증 등으로 user 객체가 이후 또 바뀌어도
+  // 재생성하지 않음), select/eventClick 콜백 안에서는 항상 최신 user 값을 보도록 ref로 참조한다.
+  const userRef = React.useRef(user);
+  userRef.current = user;
+  const adminAuthRef = React.useRef(null);
+  const [dismissedNotice, setDismissedNotice] = React.useState(() => {
+    try {
+      return sessionStorage.getItem('dismissedNotice') || '';
+    } catch (e) {
+      return '';
+    }
+  });
   const [showNotice, setShowNotice] = React.useState(false);
   const [showForm, setShowForm] = React.useState(false);
   const [showInstruction, setShowInstruction] = React.useState(() => {
     const savedUser = sessionStorage.getItem('cardPortalUser');
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
-      return !parsedUser.isAdmin;
+      // 관리자 계정(PIN 인증 전인 관리자 후보 포함)은 안내사항 확인 없이 바로 캘린더를 보여준다.
+      return !(parsedUser.isAdmin || parsedUser.canAdminAuth);
     }
     return false;
   });
@@ -1504,9 +1791,6 @@ function App() {
       setLoading(false);
     }
   };
-  React.useEffect(() => {
-    eventsRef.current = events;
-  }, [events]);
   const fetchBookings = async (isSilent = false) => {
     const silent = isSilent === true;
     if (!silent) setLoading(true);
@@ -1589,7 +1873,7 @@ function App() {
       };
       setUser(loggedInUser);
       sessionStorage.setItem('cardPortalUser', JSON.stringify(loggedInUser));
-      if (!loggedInUser.isAdmin) setShowInstruction(true);
+      if (!(loggedInUser.isAdmin || loggedInUser.canAdminAuth)) setShowInstruction(true);
     } catch (e) {
       alert(e.message);
     } finally {
@@ -1623,6 +1907,7 @@ function App() {
       setLoading(false);
     }
   };
+  adminAuthRef.current = handleAdminAuth;
   const openAnnouncementEditor = () => {
     setAnnouncementDraft({
       text: notice.text || '',
@@ -1688,7 +1973,11 @@ function App() {
     }
   };
   const renderDayCellContent = arg => {
-    const dayNumber = arg.dayNumberText.replace('일', '');
+    let dayNumber = arg.dayNumberText.replace('일', '');
+    // 이어지는 월 보기에서는 매달 1일에 "11월 1일"처럼 달 이름을 함께 보여준다.
+    if (arg.view.type === 'dayGridContinuous' && arg.date.getDate() === 1) {
+      dayNumber = (arg.date.getMonth() + 1) + '월 1일';
+    }
     const holidayName = getHolidayName(arg.date);
     const isToday = arg.isToday;
     const dayOfWeek = arg.date.getDay(); // 0: 일요일, 6: 토요일
@@ -1703,24 +1992,46 @@ function App() {
       }
     }
     let leftTag = null;
-    if (holidayName && arg.view.type === 'dayGridMonth') {
-      const safeHolidayName = escapeHtml(holidayName);
-      leftTag = `<span class="fc-holiday-name" style="font-size: 11px; font-weight: 600; color: #ef4444; white-space: nowrap; line-height: 1; letter-spacing: -0.02em;" title="${safeHolidayName}">${safeHolidayName}</span>`;
-    } else if (isToday && arg.view.type === 'dayGridMonth') {
+    const isDayGridView = arg.view.type === 'dayGridMonth' || arg.view.type === 'dayGridWeek' || arg.view.type === 'dayGridContinuous';
+    if (holidayName && isDayGridView) {
+      const isUnavailable = holidayName === UNAVAILABLE_PERIOD_LABEL;
+      const displayHolidayName = isUnavailable ? UNAVAILABLE_PERIOD_SHORT_LABEL : holidayName;
+      const safeHolidayName = escapeHtml(displayHolidayName);
+      const tagColor = isUnavailable ? '#64748b' : '#ef4444';
+      leftTag = `<span class="fc-holiday-name" style="font-size: 11px; font-weight: 600; color: ${tagColor}; white-space: nowrap; flex-shrink: 1; line-height: 1; letter-spacing: -0.02em;" title="${escapeHtml(holidayName)}">${safeHolidayName}</span>`;
+    } else if (isToday && isDayGridView) {
       leftTag = `<span class="fc-today-badge" style="font-size: 10px; font-weight: 800; color: #2563eb; background-color: rgba(37,99,235,0.12); padding: 1px 4px; border-radius: 3px; white-space: nowrap; line-height: 1.1;">오늘</span>`;
     }
-    if (leftTag) {
-      return {
-        html: `<div style="display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; min-width: 0 !important; gap: 4px !important; white-space: nowrap !important;">
+    const dayNumRowHtml = leftTag ? `<div class="fc-daynum-row" style="display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; min-width: 0 !important; gap: 4px !important; white-space: nowrap !important;">
                             ${leftTag}
-                            <span class="fc-day-num" style="${numColor}">${dayNumber}</span>
-                        </div>`
-      };
+                            <span class="fc-day-num" style="flex-shrink: 0; ${numColor}">${dayNumber}</span>
+                        </div>` : `<div style="display: flex !important; justify-content: flex-end !important; align-items: center !important; width: 100% !important;">
+                        <span class="fc-day-num" style="${numColor}">${dayNumber}</span>
+                    </div>`;
+
+    // ⚡ 모바일 월간 보기: 예약 내역을 막대 대신 작은 점으로 표시 (네이버 캘린더 스타일)
+    let dotsRowHtml = '';
+    if (window.innerWidth < 640 && arg.view.type === 'dayGridMonth') {
+      const dayStart = new Date(arg.date.getFullYear(), arg.date.getMonth(), arg.date.getDate());
+      const dayEnd = new Date(dayStart.getTime() + 86400000);
+      const dayEvents = (eventsRef.current || []).filter(ev => {
+        const evStart = new Date(ev.start);
+        const evEnd = new Date(ev.end);
+        return evStart < dayEnd && evEnd > dayStart;
+      });
+      if (dayEvents.length > 0) {
+        const maxDots = 4;
+        const dots = dayEvents.slice(0, maxDots).map(ev => {
+          const isMine = ev.extendedProps?.isMine === true;
+          const color = isMine ? '#2563eb' : ev.extendedProps?.colorCode || '#94a3b8';
+          return `<span style="width: 4.5px; height: 4.5px; border-radius: 9999px; background-color: ${color}; display: inline-block; flex-shrink: 0;"></span>`;
+        }).join('');
+        const extra = dayEvents.length > maxDots ? `<span style="font-size: 7px; color: #94a3b8; line-height: 1; margin-left: 1px;">+${dayEvents.length - maxDots}</span>` : '';
+        dotsRowHtml = `<div style="display: flex; justify-content: center; align-items: center; gap: 2.5px; width: 100%; margin-top: 2px;">${dots}${extra}</div>`;
+      }
     }
     return {
-      html: `<div style="display: flex !important; justify-content: flex-end !important; align-items: center !important; width: 100% !important;">
-                        <span class="fc-day-num" style="${numColor}">${dayNumber}</span>
-                    </div>`
+      html: `<div style="display: flex !important; flex-direction: column !important; align-items: stretch !important; width: 100% !important;">${dayNumRowHtml}${dotsRowHtml}</div>`
     };
   };
 
@@ -1728,7 +2039,7 @@ function App() {
   // ⚡ 하루에 보여줄 예약 최대 줄 수 (화면 크기에 따라 고정값으로 계산 -> "true" 자동계산의 날짜별 오차 제거)
   const getDayMaxEventRows = () => {
     const w = window.innerWidth;
-    if (w < 480) return 2;
+    if (w < 640) return false; // 모바일 월간 보기는 막대 대신 점으로 표시하므로 줄 수 제한 불필요
     if (w < 768) return 3;
     return 4;
   };
@@ -1745,11 +2056,94 @@ function App() {
     const m = targetMin % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
   };
+  // ⚡ 캘린더 인스턴스(재)생성 직후와 events/budgetFilter 변경 시 공통으로 호출되는 동기화 함수.
+  // 로그인 직후 캘린더가 막 생성된 시점에도 이미 불러와 둔 예약 데이터를 즉시 반영해
+  // "로그인하자마자 날짜를 눌러도 예약 내역이 비어 보이는" 공백을 없앤다.
+  const syncCalendarEvents = () => {
+    if (!calendarInstanceRef.current) return;
+    let visibleEvents = events;
+    if (budgetFilter !== '전체') {
+      visibleEvents = events.filter(ev => {
+        const budget = ev.extendedProps?.budget || '';
+        if (budgetFilter === '기타') {
+          return !['간호부', 'QI(적정진료관리팀)', '총무팀', '학생실습비'].includes(budget);
+        }
+        return budget === budgetFilter;
+      });
+    }
+    eventsRef.current = visibleEvents;
+    calendarInstanceRef.current.removeAllEvents();
+    calendarInstanceRef.current.addEventSource(visibleEvents);
+    calendarInstanceRef.current.render();
+  };
   React.useEffect(() => {
     if (!user) return;
     if (!calendarContainerRef.current) return;
     if (calendarInstanceRef.current) return;
-    const calendar = new FullCalendar.Calendar(calendarContainerRef.current, {
+    // 관리자만 예외로 허용되는 제한(지난 날짜·2개월 초과·주말/공휴일·3영업일 초과)에 걸렸을 때:
+    // 관리자 후보 계정(인증 전)이면 인증을 안내하고, 그 외 사용자에게는 제한 사유만 보여준다.
+    const explainRestriction = async reason => {
+      const u = userRef.current;
+      if (u.canAdminAuth && !u.isAdmin) {
+        const ok = await confirm(reason + '\n\n관리자 인증을 하면 가능합니다. 지금 관리자 인증을 진행할까요?');
+        if (ok) adminAuthRef.current?.();
+      } else {
+        alert(reason);
+      }
+    };
+    // ⚡ PC 월 보기: 달 구분 없이 주(week)가 세로로 끊김 없이 이어지는 하나의 달력.
+    // 스크롤하면 맨 위에 보이는 주가 속한 달로 상단 제목("2026년 10월")의 숫자만 바뀐다.
+    let currentMonthKey = null;
+    const getScroller = () => {
+      const body = calendarContainerRef.current && calendarContainerRef.current.querySelector('.fc-daygrid-body');
+      return body ? body.closest('.fc-scroller') : null;
+    };
+    const updateContinuousTitle = () => {
+      const root = calendarContainerRef.current;
+      const sc = getScroller();
+      if (!root || !sc) return;
+      const limit = sc.getBoundingClientRect().top + 8;
+      let key = null;
+      // 각 주의 목요일이 속한 달을 그 주의 달로 본다(주가 두 달에 걸쳐 있을 때 많이 걸친 쪽).
+      for (const td of root.querySelectorAll('.fc-daygrid-day[data-date]')) {
+        const ds = td.getAttribute('data-date');
+        if (new Date(ds + 'T00:00:00').getDay() !== 4) continue;
+        if (td.getBoundingClientRect().bottom > limit) {
+          key = ds.slice(0, 7);
+          break;
+        }
+      }
+      if (key) currentMonthKey = key;
+      applyContinuousTitle();
+    };
+    // FullCalendar가 툴바를 다시 그리면 기본 제목(기간 전체 표기)으로 되돌아가므로, 이어지는 월 보기에서는 항상 현재 달로 맞춘다.
+    const applyContinuousTitle = () => {
+      const root = calendarContainerRef.current;
+      if (!root || !currentMonthKey || !root.classList.contains('fc-continuous-mode')) return;
+      const titleEl = root.querySelector('.fc-toolbar-title');
+      const label = currentMonthKey.slice(0, 4) + '년 ' + Number(currentMonthKey.slice(5, 7)) + '월';
+      if (titleEl && titleEl.textContent !== label) titleEl.textContent = label;
+    };
+    const scrollToMonth = (key, smooth) => {
+      const root = calendarContainerRef.current;
+      const sc = getScroller();
+      const td = root && root.querySelector(`.fc-daygrid-day[data-date="${key}-01"]`);
+      const row = td && td.closest('tr');
+      if (!sc || !row) return false;
+      sc.scrollTo({
+        top: sc.scrollTop + row.getBoundingClientRect().top - sc.getBoundingClientRect().top,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
+      return true;
+    };
+    const monthKeyOf = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const stepMonth = delta => {
+      const base = currentMonthKey || monthKeyOf(new Date());
+      scrollToMonth(monthKeyOf(new Date(Number(base.slice(0, 4)), Number(base.slice(5, 7)) - 1 + delta, 1)), true);
+    };
+    const calOptions = {
+      // PC는 처음부터 끊김 없이 이어지는 스크롤 월 보기로 열고, 모바일은 기존 월 보기를 쓴다.
+      initialView: window.innerWidth >= 640 ? 'dayGridContinuous' : 'dayGridMonth',
       height: '100%',
       expandRows: true,
       dayMaxEventRows: getDayMaxEventRows(),
@@ -1757,6 +2151,29 @@ function App() {
       scrollTime: getNowScrollTime(),
       nowIndicator: true,
       datesSet: function (info) {
+        info.view.calendar.el.classList.toggle('fc-continuous-mode', info.view.type === 'dayGridContinuous');
+        if (info.view.type === 'dayGridContinuous') {
+          setTimeout(() => {
+            const sc = getScroller();
+            if (!sc) return;
+            if (!sc.dataset.titleBound) {
+              sc.dataset.titleBound = '1';
+              let ticking = false;
+              sc.addEventListener('scroll', () => {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(() => {
+                  ticking = false;
+                  updateContinuousTitle();
+                });
+              }, { passive: true });
+              // 처음 열 때는 이번 달의 첫 주가 맨 위에 오도록 한다.
+              currentMonthKey = null;
+              scrollToMonth(monthKeyOf(new Date()), false);
+            }
+            updateContinuousTitle();
+          }, 60);
+        }
         if (info.view.type === 'timeGridDay' || info.view.type === 'timeGridWeek') {
           info.view.calendar.scrollToTime(getNowScrollTime());
         }
@@ -1764,12 +2181,15 @@ function App() {
       windowResize: function (arg) {
         arg.view.calendar.setOption('dayMaxEventRows', getDayMaxEventRows());
         arg.view.calendar.setOption('slotDuration', getSlotDuration());
+        arg.view.calendar.setOption('selectable', window.innerWidth >= 640);
+        if (typeof applySwipeContainerLayout === 'function') applySwipeContainerLayout();
       },
       handleWindowResize: true,
       locale: 'ko',
-      selectable: true,
-      selectLongPressDelay: 0,
-      touchLongPressDelay: 0,
+      // ⚡ selectable(드래그 범위 선택)은 터치 동작을 가로채기 위해 내부적으로 터치 이벤트를 직접
+      // 처리하는데, 이게 longPressDelay 값과 무관하게 모바일에서 화면을 손가락으로 스크롤하려는
+      // 제스처까지 붙잡아 버린다. 모바일 탭은 dateClick이 전담하므로 selectable은 데스크톱에서만 켠다.
+      selectable: window.innerWidth >= 640,
       allDaySlot: false,
       slotMinTime: '08:30:00',
       slotMaxTime: '17:30:00',
@@ -1777,22 +2197,68 @@ function App() {
       validRange: {
         start: '2026-05-01'
       },
+      // 범례(Me/다른 예약/주말·공휴일)는 달력 영역을 넓히려고 오늘 버튼 오른쪽 툴바에 둔다. 내용은 datesSet에서 채운다.
+      customButtons: {
+        legend: {
+          text: ''
+        },
+        // PC: 이어지는 월 보기에서는 이전/다음/오늘이 "한 달 위·아래로 스크롤"이고, 주/일 보기에서는 기존처럼 이동한다.
+        prevScroll: {
+          icon: 'chevron-left',
+          click: () => (calendar.view.type === 'dayGridContinuous' ? stepMonth(-1) : calendar.prev())
+        },
+        nextScroll: {
+          icon: 'chevron-right',
+          click: () => (calendar.view.type === 'dayGridContinuous' ? stepMonth(1) : calendar.next())
+        },
+        todayScroll: {
+          text: 'today',
+          click: () => (calendar.view.type === 'dayGridContinuous' ? scrollToMonth(monthKeyOf(new Date()), true) : calendar.today())
+        }
+      },
       headerToolbar: {
-        left: 'prev,next today',
+        left: window.innerWidth >= 640 ? 'prevScroll,nextScroll todayScroll legend' : 'prev,next today legend',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        right: window.innerWidth >= 640 ? 'dayGridContinuous,timeGridWeek,timeGridDay' : 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      // ⚡ PC용 월 보기: 5월(예약 가능 시작 달)부터 앞으로 몇 달을 주 단위로 끊김 없이 이어 붙인 하나의 달력.
+      views: {
+        dayGridContinuous: {
+          type: 'dayGrid',
+          expandRows: false,
+          // 한 주의 높이(칸 너비 ÷ 비율). 기본값이면 한 주가 너무 높아 화면에 4주밖에 안 보인다.
+          aspectRatio: 2,
+          fixedWeekCount: false,
+          visibleRange: function () {
+            const end = new Date();
+            end.setMonth(end.getMonth() + 4, 1);
+            end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
+            return {
+              start: '2026-04-26',
+              end: end.getFullYear() + '-' + String(end.getMonth() + 1).padStart(2, '0') + '-' + String(end.getDate()).padStart(2, '0')
+            };
+          }
+        }
       },
       buttonText: {
         month: 'Month',
+        dayGridContinuous: 'Month',
         week: 'Week',
         day: 'Day'
       },
       dayCellClassNames: function (arg) {
-        if (getHolidayName(arg.date)) return ['holiday-day'];
-        return [];
+        const classes = getDayCellClasses(arg.date).slice();
+        if (arg.date.getDate() === 1) classes.push('fc-first-of-month');
+        return classes;
       },
       dayCellContent: renderDayCellContent,
       eventContent: function (arg) {
+        // ⚡ 모바일 월간 보기에서는 막대 대신 날짜 칸의 점으로 예약을 표시하므로 기본 이벤트 막대는 숨김
+        if (window.innerWidth < 640 && arg.view.type === 'dayGridMonth') {
+          return {
+            html: ''
+          };
+        }
         const start = new Date(arg.event.start);
         const end = new Date(arg.event.end);
 
@@ -1813,6 +2279,18 @@ function App() {
         const safeDept = escapeHtml(dept);
         const isMine = arg.event.extendedProps?.isMine === true;
 
+        // ⚡ 하루/주 보기(시간표)는 카드가 세로로 길어 한 줄만 쓰면 비어 보이므로 시간·부서·대여자·용도를 모두 보여준다.
+        if (arg.view.type.startsWith('timeGrid')) {
+          const owner = escapeHtml(String(arg.event.extendedProps?.name || '').trim());
+          const purpose = escapeHtml(String(arg.event.extendedProps?.purpose || '').trim());
+          return {
+            html: `<div style="background-color: ${evColor}14; border-left: 3px solid ${isMine ? '#2563eb' : evColor}cc;" class="w-full h-full px-2 py-1.5 rounded-md text-[11px] leading-snug select-none overflow-hidden flex flex-col gap-0.5">
+                                <div class="flex items-center gap-1.5 min-w-0"><span class="font-bold shrink-0 text-slate-800 dark:text-slate-100 text-[11px]">${safeTime}</span>${isMine ? '<span class="shrink-0 rounded bg-blue-100 text-blue-700 px-1 text-[9px] font-bold">Me</span>' : ''}</div>
+                                <div class="font-semibold truncate text-slate-700 dark:text-slate-200">${safeDept}${owner ? ` · ${owner}` : ''}</div>
+                                ${purpose ? `<div class="text-slate-500 dark:text-slate-400 break-words" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${purpose}</div>` : ''}
+                            </div>`
+          };
+        }
         // ⚡ 세련된 소프트 파스텔 한 줄 포맷: [시간 / 부서] (예: 2P30-5P / 50병동)
         return {
           html: `<div style="background-color: ${evColor}12; border-left: 2.5px solid ${isMine ? '#2563eb' : evColor}99; box-shadow: ${isMine ? 'inset 0 0 0 1px rgba(37,99,235,0.22)' : 'none'};" class="w-full px-1.5 py-0.5 rounded text-[11px] flex items-center gap-1.5 leading-normal select-none overflow-hidden whitespace-nowrap" title="${isMine ? 'Me · ' : ''}${safeTime} / ${safeDept}">
@@ -1824,10 +2302,64 @@ function App() {
         };
       },
       unselect: function () {},
-      select: function (info) {
+      // ⚡ 모바일 탭은 dateClick에서 처리한다. select(드래그 범위 선택)는 터치 기기에서
+      // 스크롤 제스처와 구분하기 위해 길게 눌러야만 발동하므로, 짧은 탭으로 화면을 스크롤하려는
+      // 동작까지 선택으로 가로채 버린다(selectLongPressDelay를 낮추면 이 문제가 생김).
+      // dateClick은 길게 누를 필요 없이 일반 탭/클릭에서 바로 발동하면서도 스크롤과 충돌하지 않는다.
+      dateClick: function (info) {
+        if (window.innerWidth >= 640) return;
         const calendar = info.view.calendar;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const maxSelectDate = new Date();
+        maxSelectDate.setMonth(maxSelectDate.getMonth() + 2);
+        // ⚡ info.dateStr은 Week/Day(timeGrid) 뷰에서는 시간까지 포함되므로 날짜 부분만 사용
+        const sDate = info.dateStr.split('T')[0];
+        const clickedDate = new Date(sDate + "T00:00:00");
+        if (!userRef.current.isAdmin) {
+          // 지난 날짜는 팝업 없이 예약 내역만 보여준다(신규 예약 버튼은 목록 화면에서 숨김).
+          if (clickedDate >= today) {
+            if (clickedDate > maxSelectDate) {
+              explainRestriction("⚠️ 예약은 2개월 이내의 날짜만 신청 가능합니다.");
+              return;
+            }
+            if (!isAvailableDate(sDate)) {
+              explainRestriction("⚠️ 주말 및 공휴일은 예약할 수 없습니다.");
+              return;
+            }
+          }
+        }
+        setSelectedSlot({
+          startDate: sDate,
+          endDate: sDate
+        });
+        const allFcEvents = calendar.getEvents();
+        const clickedTime = clickedDate.getTime();
+        const nextDayTime = clickedTime + 24 * 60 * 60 * 1000;
+        const dayEvents = allFcEvents.filter(ev => {
+          return ev.start.getTime() < nextDayTime && ev.end.getTime() > clickedTime;
+        }).map(ev => ({
+          id: ev.id,
+          title: ev.title,
+          startObj: ev.start,
+          endObj: ev.end,
+          extendedProps: ev.extendedProps
+        }));
+        setSelectedDateReservations(dayEvents);
+        setShowListModal(true);
+      },
+      select: function (info) {
+        // ⚡ 모바일 탭은 위 dateClick이 전담하므로 여기서는 데스크톱(드래그 범위 선택)만 처리한다.
+        if (window.innerWidth < 640) {
+          calendarInstanceRef.current.unselect();
+          return;
+        }
+        const calendar = info.view.calendar;
+        // ⚡ 여러 날을 드래그해서 선택한 경우(2일 이상)는 손을 떼는 즉시 그 기간으로 예약 신청을 시작한다.
+        // 하루 클릭은 실수로 창이 뜨지 않도록 같은 날짜를 한 번 더 눌러야 열린다(기존 동작).
+        const isRangeDrag = info.allDay && Math.round((info.end - info.start) / 86400000) > 1;
         const currentSelectedStr = info.startStr;
-        if (lastSelectedRef.current !== currentSelectedStr) {
+        if (!isRangeDrag && lastSelectedRef.current !== currentSelectedStr) {
           lastSelectedRef.current = currentSelectedStr;
           return;
         }
@@ -1837,21 +2369,40 @@ function App() {
         const maxSelectDate = new Date();
         maxSelectDate.setMonth(maxSelectDate.getMonth() + 2);
         const selectStart = new Date(info.startStr + "T00:00:00");
-        if (!user.isAdmin) {
+        if (!userRef.current.isAdmin) {
           if (selectStart < today) {
-            alert("⚠️ 지난 날짜는 예약할 수 없습니다.");
+            // 데스크톱은 예약 막대를 바로 눌러 볼 수 있으므로 일반 사용자에게는 팝업 없이 선택만 해제한다.
+            // 관리자 후보 계정에게만 인증하면 가능하다고 안내한다.
+            if (userRef.current.canAdminAuth) explainRestriction("⚠️ 지난 날짜는 예약할 수 없습니다.");
             calendarInstanceRef.current.unselect();
             lastSelectedRef.current = null;
             return;
           }
           if (selectStart > maxSelectDate) {
-            alert("⚠️ 예약은 2개월 이내의 날짜만 신청 가능합니다.");
+            explainRestriction("⚠️ 예약은 2개월 이내의 날짜만 신청 가능합니다.");
             calendarInstanceRef.current.unselect();
             lastSelectedRef.current = null;
             return;
           }
           if (!isAvailableDate(info.startStr.split('T')[0])) {
-            alert("⚠️ 주말 및 공휴일은 예약할 수 없습니다.");
+            explainRestriction("⚠️ 주말 및 공휴일은 예약할 수 없습니다.");
+            calendarInstanceRef.current.unselect();
+            lastSelectedRef.current = null;
+            return;
+          }
+        }
+        // ⚡ 3영업일 초과 장기 예약은 제한되므로(저장 시에도 같은 검사를 한다) 드래그가 끝난 시점에 미리 안내하고 창을 열지 않는다.
+        if (isRangeDrag && !userRef.current.isAdmin) {
+          const totalDays = Math.round((info.end - info.start) / 86400000);
+          const cursor = new Date(info.startStr.split('T')[0] + 'T00:00:00');
+          let businessDays = 0;
+          for (let i = 0; i < totalDays; i++) {
+            const ds = cursor.getFullYear() + '-' + String(cursor.getMonth() + 1).padStart(2, '0') + '-' + String(cursor.getDate()).padStart(2, '0');
+            if (isAvailableDate(ds)) businessDays++;
+            cursor.setDate(cursor.getDate() + 1);
+          }
+          if (businessDays > 3) {
+            explainRestriction("원활한 카드 사용을 위해 장기 예약은 최대 3일(영업일 기준)까지만 가능합니다.");
             calendarInstanceRef.current.unselect();
             lastSelectedRef.current = null;
             return;
@@ -1863,23 +2414,30 @@ function App() {
           startDate: sDate,
           endDate: eDate
         });
-        if (window.innerWidth < 640) {
-          const allFcEvents = calendar.getEvents();
-          const clickedTime = new Date(sDate + "T00:00:00").getTime();
-          const nextDayTime = clickedTime + 24 * 60 * 60 * 1000;
-          const dayEvents = allFcEvents.filter(ev => {
-            return ev.start.getTime() < nextDayTime && ev.end.getTime() > clickedTime;
-          }).map(ev => ({
-            id: ev.id,
-            title: ev.title,
-            startObj: ev.start,
-            endObj: ev.end,
-            extendedProps: ev.extendedProps
-          }));
-          setSelectedDateReservations(dayEvents);
-          setShowListModal(true);
+        setSelectedEvent(null);
+        if (userRef.current.canAdminAuth) {
+          // ⚡ 관리자 계정으로 로그인한 경우(추가 PIN 인증 전이라도) 법인카드 대여 사전 유의사항 안내를 건너뛰고 바로 예약 폼으로 이동
+          setDeptSelect('선택');
+          setDeptCustom('');
+          setBudgetSelect('간호부');
+          setBudgetCustom('');
+          setPhone1Select('010');
+          setPhone1Custom('');
+          setPhone2('');
+          setPhone3('');
+          setFormData({
+            id: '',
+            name: userRef.current.name,
+            empNo: userRef.current.empNo,
+            startDate: sDate,
+            startTimePart: '09:00',
+            endDate: eDate,
+            endTimePart: '12:00',
+            purpose: '',
+            details: ''
+          });
+          setShowForm(true);
         } else {
-          setSelectedEvent(null);
           setShowNotice(true);
         }
         calendarInstanceRef.current.unselect();
@@ -1911,9 +2469,21 @@ function App() {
           openBookingById(info.event.id, info.event.start, info.event.end);
         }
       }
-    });
+    };
+    const calendar = new FullCalendar.Calendar(calendarContainerRef.current, calOptions);
+    // 범례 버튼 내용은 FullCalendar가 툴바를 (다시) 그릴 때 비어 있을 수 있어, 비어 있으면 매번 다시 채운다.
+    const LEGEND_HTML = '<span class="inline-flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-blue-500 inline-block"></i>Me</span><span class="inline-flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-slate-400 inline-block"></i>다른 예약</span><span class="inline-flex items-center gap-1"><i class="w-2 h-2 rounded-full bg-red-400 inline-block"></i>주말·공휴일</span>';
+    const fillLegend = () => {
+      const btn = calendarContainerRef.current?.querySelector('.fc-header-toolbar .fc-legend-button');
+      if (btn && !btn.querySelector('i')) btn.innerHTML = LEGEND_HTML;
+      if (typeof applyContinuousTitle === 'function') applyContinuousTitle();
+    };
+    const legendObserver = new MutationObserver(fillLegend);
+    legendObserver.observe(calendarContainerRef.current, { childList: true, subtree: true });
     calendar.render();
+    fillLegend();
     calendarInstanceRef.current = calendar;
+    syncCalendarEvents();
     calendar.today();
     setTimeout(() => {
       calendar.updateSize();
@@ -1924,35 +2494,186 @@ function App() {
         });
       }
     }, 100);
+    // 모바일: 네이버 캘린더처럼 손가락을 따라 현재 달력과 이웃 달력이 나란히 밀리고, 충분히 밀면 넘어가며 못 미치면 되돌아온다.
+    // 세로 스크롤과는 처음 움직인 방향으로 구분한다.
+    const swipeEl = calendarContainerRef.current;
+    // ⚡ 이 스타일은 모바일 스와이프 전용. PC 폭에서까지 걸려 있으면 ".fc" 루트가
+    // position/overflow 기준점이 되어 FullCalendar의 "+more" 팝업 위치 계산이 틀어진다.
+    const applySwipeContainerLayout = () => {
+      const isMobile = window.innerWidth < 640;
+      swipeEl.style.touchAction = isMobile ? 'pan-y' : '';
+      swipeEl.style.position = isMobile ? 'relative' : '';
+      swipeEl.style.overflow = isMobile ? 'hidden' : '';
+    };
+    applySwipeContainerLayout();
+    const minDate = new Date(calOptions.validRange.start + 'T00:00:00');
+    let swipe = null;
+    let swipeBusy = false;
+    const getHarness = () => swipeEl.querySelector('.fc-view-harness');
+    const move = (el, x, ms) => {
+      el.style.transition = ms ? `transform ${ms}ms ease-out` : 'none';
+      el.style.transform = x ? `translateX(${x}px)` : '';
+    };
+    const destroyPreview = sw => {
+      if (sw.preview) {
+        sw.preview.cal.destroy();
+        sw.preview.el.remove();
+        sw.preview = null;
+      }
+    };
+    // 이웃 기간(sign: +1 다음, -1 이전)을 같은 크기·같은 옵션으로 옆에 그려 둔다. 이전 기간이 허용 범위 밖이면 null.
+    const buildPreview = (sw, sign) => {
+      const view = calendar.view;
+      const target = sign > 0 ? new Date(view.currentEnd) : new Date(view.currentStart.getTime() - 86400000);
+      if (target < minDate) return null;
+      // FullCalendar는 컨테이너 요소 자체에 .fc 클래스를 붙이고, 이 요소가 패딩/테두리를 갖는다(툴바 + 본문이 그 안에 배치됨).
+      // 본문(harness) 크기로 맞추면 이웃 달력이 패딩만큼 아래로 밀려 보이므로, 실제 달력 컨테이너와 같은 테두리 박스 크기·위치에 같은 구조로 그린다.
+      // 툴바는 투명하게 자리만 차지한다.
+      const el = document.createElement('div');
+      el.style.cssText = `position:absolute;top:${-swipeEl.clientTop}px;left:${-swipeEl.clientLeft}px;width:${swipeEl.offsetWidth}px;height:${swipeEl.offsetHeight}px;pointer-events:none;will-change:transform;`.replace(/\n/g, '');
+      swipeEl.appendChild(el);
+      const cal = new FullCalendar.Calendar(el, {
+        ...calOptions,
+        initialView: view.type,
+        initialDate: target,
+        height: '100%',
+        selectable: false,
+        nowIndicator: false,
+        dateClick: undefined,
+        select: undefined,
+        eventClick: undefined,
+        datesSet: undefined,
+        windowResize: undefined,
+        events: calendar.getEvents().map(ev => ev.toPlainObject({ collapseExtendedProps: false }))
+      });
+      cal.render();
+      el.style.setProperty('background', 'transparent', 'important');
+      el.style.setProperty('border-color', 'transparent', 'important');
+      el.style.setProperty('box-shadow', 'none', 'important');
+      const bar = el.querySelector('.fc-header-toolbar');
+      if (bar) bar.style.visibility = 'hidden';
+      return { el, cal, sign };
+    };
+    const onTouchStart = e => {
+      const el = getHarness();
+      if (swipeBusy || !el || window.innerWidth >= 640 || e.touches.length !== 1) { swipe = null; return; }
+      swipe = { x: e.touches[0].clientX, y: e.touches[0].clientY, dir: null, el, preview: null };
+    };
+    const onTouchMove = e => {
+      if (!swipe) return;
+      const dx = e.touches[0].clientX - swipe.x;
+      const dy = e.touches[0].clientY - swipe.y;
+      if (!swipe.dir) {
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+        swipe.dir = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'h' : 'v';
+      }
+      if (swipe.dir !== 'h') return;
+      const sign = dx < 0 ? 1 : -1;
+      if (swipe.preview && swipe.preview.sign !== sign) destroyPreview(swipe);
+      if (!swipe.preview && !(swipe.failedSign === sign)) {
+        swipe.preview = buildPreview(swipe, sign);
+        if (!swipe.preview) swipe.failedSign = sign;
+      }
+      const w = swipe.el.offsetWidth;
+      // 이웃 기간이 없는 방향(범위 밖)은 고무줄처럼 살짝만 따라온다.
+      const shift = swipe.preview ? dx : dx * 0.25;
+      move(swipe.el, shift, 0);
+      if (swipe.preview) move(swipe.preview.el, shift + sign * w, 0);
+    };
+    const finishSwipe = sw => {
+      const { el, preview } = sw;
+      const w = el.offsetWidth;
+      const shift = new DOMMatrix(getComputedStyle(el).transform).m41;
+      if (!preview || Math.abs(shift) < Math.min(90, w * 0.3)) {
+        move(el, 0, 200);
+        if (preview) move(preview.el, preview.sign * w, 200);
+        setTimeout(() => destroyPreview(sw), 210);
+        return;
+      }
+      const sign = preview.sign;
+      swipeBusy = true;
+      move(el, -sign * w, 200);
+      move(preview.el, 0, 200);
+      setTimeout(() => {
+        if (sign > 0) calendar.next(); else calendar.prev();
+        move(el, 0, 0);
+        destroyPreview(sw);
+        swipeBusy = false;
+      }, 210);
+    };
+    const onTouchEnd = () => {
+      if (!swipe) return;
+      const sw = swipe;
+      swipe = null;
+      if (sw.dir === 'h') finishSwipe(sw);
+    };
+    swipeEl.addEventListener('touchstart', onTouchStart, { passive: true });
+    swipeEl.addEventListener('touchmove', onTouchMove, { passive: true });
+    swipeEl.addEventListener('touchend', onTouchEnd, { passive: true });
+    swipeEl.addEventListener('touchcancel', onTouchEnd, { passive: true });
     return () => {
+      legendObserver.disconnect();
+      swipeEl.removeEventListener('touchstart', onTouchStart);
+      swipeEl.removeEventListener('touchmove', onTouchMove);
+      swipeEl.removeEventListener('touchend', onTouchEnd);
+      swipeEl.removeEventListener('touchcancel', onTouchEnd);
       if (calendarInstanceRef.current) {
         calendarInstanceRef.current.destroy();
         calendarInstanceRef.current = null;
       }
     };
-  }, [user]);
+    // ⚡ user 객체는 관리자 PIN 인증 등으로 로그인 이후에도 여러 번 바뀔 수 있는데, 그때마다 캘린더를
+    // 통째로 destroy/재생성하면 이벤트가 다시 채워지기 전까지 "방금 로그인 후 바로 탭하면 예약 내역이
+    // 비어 보이는" 공백이 생긴다. 로그인 여부(!!user)가 실제로 바뀔 때만 재생성하고, 콜백 내부에서는
+    // userRef로 최신 user 값을 읽는다.
+  }, [!!user]);
+  // ⚡ 모바일 달력 접힘/펼침 시 FullCalendar가 새 높이에 맞게 다시 그려지도록 보정
+  // 목록이 열려 달력이 절반으로 줄어들면: 6주를 억지로 압축하지 않고(expandRows:false) 각 주가 터치하기 충분한 높이를 유지한 채 스크롤되도록 하고,
+  // 선택한 날짜가 보이는 영역 중앙에 오도록 스크롤한다. 목록을 닫으면 다시 전체 달력이 화면을 꽉 채우도록 expandRows:true로 복원.
   React.useEffect(() => {
-    if (!calendarInstanceRef.current) return;
-    let visibleEvents = events;
-    if (budgetFilter !== '전체') {
-      visibleEvents = events.filter(ev => {
-        const budget = ev.extendedProps?.budget || '';
-        if (budgetFilter === '기타') {
-          return !['간호부', 'QI(적정진료관리팀)', '총무팀', '학생실습비'].includes(budget);
-        }
-        return budget === budgetFilter;
+    const calendar = calendarInstanceRef.current;
+    if (!calendar) return;
+    calendar.setOption('expandRows', !showListModal);
+    calendar.updateSize();
+    // ⚡ 어떤 날짜를 탭해서 목록이 떴는지 눈에 보이도록, 해당 날짜 셀에 파란 선택 표시를 남긴다.
+    const highlightSelectedDate = () => {
+      if (!calendarContainerRef.current) return;
+      calendarContainerRef.current.querySelectorAll('.selected-date-cell').forEach(el => el.classList.remove('selected-date-cell'));
+      if (!showListModal || !selectedSlot?.startDate) return;
+      const cell = calendarContainerRef.current.querySelector(`[data-date="${selectedSlot.startDate}"]`);
+      if (cell) cell.classList.add('selected-date-cell');
+    };
+    const centerSelectedDate = () => {
+      if (!showListModal || !selectedSlot?.startDate || !calendarContainerRef.current) return;
+      const cell = calendarContainerRef.current.querySelector(`[data-date="${selectedSlot.startDate}"]`);
+      if (cell) cell.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
       });
-    }
-    calendarInstanceRef.current.removeAllEvents();
-    calendarInstanceRef.current.addEventSource(visibleEvents);
+    };
+    highlightSelectedDate();
+    const t1 = setTimeout(() => {
+      calendar.updateSize();
+      centerSelectedDate();
+      highlightSelectedDate();
+    }, 80);
+    const t2 = setTimeout(() => {
+      calendar.updateSize();
+      centerSelectedDate();
+      highlightSelectedDate();
+    }, 240);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [showListModal, selectedSlot?.startDate]);
+  React.useEffect(() => {
+    syncCalendarEvents();
   }, [events, budgetFilter]);
   React.useEffect(() => {
     if (calendarInstanceRef.current) {
       calendarInstanceRef.current.setOption('dayCellClassNames', function (arg) {
-        if (getHolidayName(arg.date)) {
-          return ['holiday-day'];
-        }
-        return [];
+        return getDayCellClasses(arg.date);
       });
       calendarInstanceRef.current.setOption('dayCellContent', renderDayCellContent);
       calendarInstanceRef.current.render();
@@ -2166,15 +2887,22 @@ function App() {
       setLoading(false);
     }
   };
+  // 관리자가 아닌 사용자가 지난 날짜를 선택한 경우: 예약 내역만 조회 가능하고 신규 예약은 불가
+  const isPastSelection = !user?.isAdmin && !!selectedSlot?.startDate && (() => {
+    const t = new Date();
+    return selectedSlot.startDate < t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+  })();
   const hasPermission = React.useMemo(() => !selectedEvent || selectedEvent.canEdit === true, [selectedEvent]);
   const handleLogout = async () => {
     const token = user?.token;
+    setLoading(true);
     try {
       if (token) await callApi({
         action: 'LOGOUT',
         token
       });
     } catch (e) {} finally {
+      setLoading(false);
       setUser(null);
       sessionStorage.removeItem('cardPortalUser');
       setSelectedEvent(null);
@@ -2188,6 +2916,28 @@ function App() {
   // ---------------------------------------------------------
   // ⭐ 1 & 2. 비로그인 (메인 로그인 화면) 영역 + DotField 배경
   // ---------------------------------------------------------
+  // 로그인 화면과 메인 화면이 함께 쓰는 로딩 표시: 칸(카드) 없이 화면 전체를 블러 처리하고 애니메이션만 보여준다.
+  const loadingOverlay = loading ? /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 bg-white/55 dark:bg-slate-900/55 backdrop-blur-md flex flex-col items-center justify-center gap-3 z-[9999] select-none",
+    role: "status",
+    "aria-live": "polite"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-indicator scale-90"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-circle"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "typing-shadow"
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs font-bold text-slate-600 dark:text-slate-200"
+  }, "\uCC98\uB9AC \uC911\uC785\uB2C8\uB2E4...")) : null;
   if (!user) {
     return /*#__PURE__*/React.createElement("div", {
       className: "relative h-dvh w-full flex items-center justify-center bg-gradient-to-br from-blue-50/60 via-slate-50 to-indigo-50/40 dark:from-[#070d18] dark:via-[#0b1120] dark:to-[#111827] px-4 transition-colors duration-200 overflow-hidden"
@@ -2291,16 +3041,16 @@ function App() {
       className: "text-[10px] font-medium text-slate-400 dark:text-slate-500"
     }, "\xA9 vico.yj All rights reserved. ", /*#__PURE__*/React.createElement("span", {
       className: "mx-1 text-slate-300 dark:text-slate-600"
-    }, "|"), " codeyj@duck.com")));
+    }, "|"), " codeyj@duck.com")), loadingOverlay);
   }
   return /*#__PURE__*/React.createElement("div", {
-    className: "relative min-h-dvh h-auto sm:h-dvh flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200 overflow-x-hidden overflow-y-auto sm:overflow-hidden"
+    className: "relative h-dvh flex flex-col bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-200 overflow-x-hidden overflow-hidden"
   }, /*#__PURE__*/React.createElement("header", {
-    className: "relative bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3 shrink-0 shadow-sm transition-colors duration-200 z-20"
+    className: "relative bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 sm:px-4 py-1 sm:py-1.5 flex flex-col sm:flex-row justify-between sm:items-center gap-1 sm:gap-3 shrink-0 shadow-sm transition-colors duration-200 z-20"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col select-none relative z-10"
+    className: "hidden sm:flex sm:flex-row sm:items-baseline sm:gap-3 select-none relative z-10"
   }, /*#__PURE__*/React.createElement("span", {
-    className: "text-lg font-bold text-slate-900 dark:text-white tracking-tight cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition",
+    className: "text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition",
     onClick: () => {
       setShowMyBookings(false);
       setShowForm(false);
@@ -2308,11 +3058,11 @@ function App() {
       setShowNotice(false);
       if (calendarInstanceRef.current) {
         calendarInstanceRef.current.today();
-        calendarInstanceRef.current.changeView('dayGridMonth');
+        calendarInstanceRef.current.changeView(window.innerWidth >= 640 ? 'dayGridContinuous' : 'dayGridMonth');
       }
     }
   }, "DNS : Card-Portal"), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium"
+    className: "hidden sm:flex items-center text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium"
   }, /*#__PURE__*/React.createElement("svg", {
     xmlns: "http://www.w3.org/2000/svg",
     className: "w-3.5 h-3.5 mr-1",
@@ -2323,7 +3073,7 @@ function App() {
     d: "M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 0 1 .67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 1 1-.671-1.34l.041-.022ZM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z",
     clipRule: "evenodd"
   })), /*#__PURE__*/React.createElement("span", null, "\uC608\uC57D\uC740 \uCD5C\uB300 2\uAC1C\uC6D4 \uB0B4 / 3\uC77C \uCD08\uACFC \uC7A5\uAE30 \uC608\uC57D\uC740 \uC81C\uD55C\uB429\uB2C8\uB2E4."))), /*#__PURE__*/React.createElement("div", {
-    className: "hidden md:flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[30] items-center gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 shadow-sm select-none transition-all whitespace-nowrap"
+    className: "hidden md:flex absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[30] items-center gap-3 px-3 py-1 select-none transition-all whitespace-nowrap"
   }, isFetchingStatus ? /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2 text-slate-500 dark:text-slate-400 px-1 py-0.5"
   }, /*#__PURE__*/React.createElement("div", {
@@ -2371,7 +3121,7 @@ function App() {
   }, user.canAdminAuth && !user.isAdmin && /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uC0C8\uB85C\uACE0\uCE68",
     onClick: handleAdminAuth,
-    className: "p-1.5 sm:px-3 sm:py-2 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95",
+    className: "p-1.5 sm:px-2.5 sm:py-1 hover:bg-amber-50 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-semibold transition flex items-center gap-1 active:scale-95",
     title: "\uAD00\uB9AC\uC790 \uC778\uC99D"
   }, /*#__PURE__*/React.createElement("svg", {
     xmlns: "http://www.w3.org/2000/svg",
@@ -2385,30 +3135,30 @@ function App() {
   })), /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
   }, "\uAD00\uB9AC\uC790 \uC778\uC99D")), user.isAdmin && /*#__PURE__*/React.createElement("span", {
-    className: "px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] sm:text-[11px] font-bold"
+    className: "px-1.5 sm:px-2 py-0.5 sm:py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-[10px] sm:text-[11px] font-bold"
   }, "\uAD00\uB9AC\uC790"), user.isAdmin && /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815",
     onClick: openAnnouncementEditor,
-    className: "p-1.5 sm:px-3 sm:py-2 bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95",
+    className: "p-1.5 sm:px-2.5 sm:py-1 hover:bg-sky-50 dark:hover:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-xs font-semibold transition flex items-center gap-1 active:scale-95",
     title: "\uC548\uB0B4\uC0AC\uD56D \uC124\uC815"
   }, "\uD83D\uDCE2", /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
   }, "\uC548\uB0B4\uC0AC\uD56D")), user.isAdmin && /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uC608\uC57D \uBD88\uAC00 \uAE30\uAC04 \uC124\uC815",
     onClick: openUnavailablePeriodEditor,
-    className: "p-1.5 sm:px-3 sm:py-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95",
+    className: "p-1.5 sm:px-2.5 sm:py-1 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-xs font-semibold transition flex items-center gap-1 active:scale-95",
     title: "\uC608\uC57D \uBD88\uAC00 \uAE30\uAC04 \uC124\uC815"
   }, "\uD83D\uDEAB", /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
   }, "\uC608\uC57D\uBD88\uAC00")), /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uB85C\uADF8\uC544\uC6C3",
     onClick: () => setShowMyBookings(true),
-    className: "hidden sm:flex relative items-center px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition"
+    className: "hidden sm:flex relative items-center px-2.5 py-1 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-semibold transition"
   }, "Me", myBookings.length > 0 && /*#__PURE__*/React.createElement("span", {
     className: "ml-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px]"
   }, myBookings.length)), /*#__PURE__*/React.createElement("button", {
     onClick: () => fetchBookings(false),
-    className: "p-2 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5",
+    className: "p-1.5 sm:px-2.5 sm:py-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 active:scale-95 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
     title: "\uC0C8\uB85C\uACE0\uCE68"
   }, /*#__PURE__*/React.createElement("svg", {
     xmlns: "http://www.w3.org/2000/svg",
@@ -2425,7 +3175,7 @@ function App() {
     className: "hidden sm:inline"
   }, "\uC0C8\uB85C\uACE0\uCE68")), /*#__PURE__*/React.createElement("button", {
     onClick: handleLogout,
-    className: "p-2 sm:px-2.5 sm:py-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition active:scale-95 flex items-center justify-center",
+    className: "p-1.5 sm:px-2.5 sm:py-1 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition active:scale-95 flex items-center justify-center",
     title: "\uB85C\uADF8\uC544\uC6C3"
   }, /*#__PURE__*/React.createElement("svg", {
     xmlns: "http://www.w3.org/2000/svg",
@@ -2440,9 +3190,9 @@ function App() {
     d: "M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
   })), /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
-  }, "\uB85C\uADF8\uC544\uC6C3"))))), notice.text && /*#__PURE__*/React.createElement("div", {
+  }, "\uB85C\uADF8\uC544\uC6C3"))))), notice.text && notice.text !== dismissedNotice && /*#__PURE__*/React.createElement("div", {
     role: "status",
-    className: `shrink-0 border-b px-4 py-2 flex items-start gap-2 text-xs sm:text-sm ${getNoticeSeverityStyle(notice.severity).classes}`
+    className: `shrink-0 border-b px-4 py-1 ${showListModal ? 'hidden sm:flex' : 'flex'} items-start gap-2 text-xs sm:text-sm ${getNoticeSeverityStyle(notice.severity).classes}`
   }, /*#__PURE__*/React.createElement("span", {
     className: "shrink-0"
   }, getNoticeSeverityStyle(notice.severity).icon), /*#__PURE__*/React.createElement("span", {
@@ -2451,14 +3201,24 @@ function App() {
     type: "button",
     onClick: openAnnouncementEditor,
     className: "shrink-0 text-[11px] font-semibold underline hover:no-underline"
-  }, "\uC218\uC815")), /*#__PURE__*/React.createElement("main", {
-    className: "flex-none sm:flex-1 w-full p-2 sm:p-4 pb-20 sm:pb-4 min-h-0 flex flex-col relative"
+  }, "\uC218\uC815"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    "aria-label": "\uACF5\uC9C0 \uB2EB\uAE30",
+    onClick: () => {
+      setDismissedNotice(notice.text);
+      try {
+        sessionStorage.setItem('dismissedNotice', notice.text);
+      } catch (e) {}
+    },
+    className: "shrink-0 px-1 text-base leading-none opacity-60 hover:opacity-100"
+  }, "\xD7")), /*#__PURE__*/React.createElement("main", {
+    className: "flex-1 w-full p-1 sm:p-2 pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-6 min-h-0 flex flex-col relative overflow-hidden"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "md:hidden shrink-0 mb-2 space-y-2"
+    className: `${showListModal ? 'hidden' : 'block'} md:hidden shrink-0 mb-0.5 space-y-1`
   }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between gap-3 shadow-sm select-none"
+    className: "px-2 py-0.5 flex items-center justify-between gap-2 select-none"
   }, isFetchingStatus ? /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col items-center justify-center min-h-[40px] w-full"
+    className: "flex flex-col items-center justify-center min-h-[26px] w-full"
   }, /*#__PURE__*/React.createElement("div", {
     className: "typing-indicator scale-75"
   }, /*#__PURE__*/React.createElement("div", {
@@ -2476,27 +3236,27 @@ function App() {
   }))) : /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between gap-3 w-full"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 min-w-0"
+    className: "flex items-center gap-2 min-w-0"
   }, /*#__PURE__*/React.createElement("span", {
-    className: `w-2.5 h-2.5 rounded-full shrink-0 ${currentBooking ? 'bg-red-500' : 'bg-emerald-500'}`
+    className: `w-2 h-2 rounded-full shrink-0 ${currentBooking ? 'bg-red-500' : 'bg-emerald-500'}`
   }), /*#__PURE__*/React.createElement("div", {
-    className: "min-w-0"
+    className: "min-w-0 flex items-baseline gap-2"
   }, currentBooking ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "text-sm font-bold text-slate-900 dark:text-white"
+    className: "text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap"
   }, "\uD604\uC7AC \uC0AC\uC6A9 \uC911"), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5"
+    className: "text-[11px] text-slate-500 dark:text-slate-400 truncate"
   }, currentBooking.extendedProps?.dept, " ", ' · ', " ", formatClock(currentBooking.start), " ", ' ~ ', " ", formatClock(currentBooking.end))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    className: "text-sm font-bold text-emerald-600 dark:text-emerald-400"
+    className: "text-xs font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap"
   }, "\uD604\uC7AC \uB300\uC5EC \uAC00\uB2A5"), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-slate-400 mt-0.5"
+    className: "text-[11px] text-slate-400 truncate"
   }, "\uD604\uC7AC \uC608\uC57D\uB41C \uC0AC\uC6A9\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.")))), nextBooking && /*#__PURE__*/React.createElement("div", {
-    className: "text-right shrink-0"
+    className: "shrink-0 flex items-baseline gap-1"
   }, /*#__PURE__*/React.createElement("div", {
     className: "text-[10px] text-slate-400"
   }, "\uB2E4\uC74C \uC608\uC57D"), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs font-semibold text-slate-700 dark:text-slate-200 mt-0.5"
+    className: "text-[11px] font-semibold text-slate-700 dark:text-slate-200"
   }, formatShortDate(nextBooking.start), " ", formatClock(nextBooking.start)))))), user.isAdmin && /*#__PURE__*/React.createElement("div", {
-    className: "shrink-0 mb-2 sm:mb-3 flex gap-1.5 overflow-x-auto pb-1 select-none"
+    className: `shrink-0 mb-1 sm:mb-3 ${showListModal ? 'hidden sm:flex' : 'flex'} gap-1.5 overflow-x-auto pb-1 select-none`
   }, [{
     key: '전체',
     label: '전체'
@@ -2520,49 +3280,55 @@ function App() {
     onClick: () => setBudgetFilter(item.key),
     className: `shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${budgetFilter === item.key ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`
   }, item.label))), /*#__PURE__*/React.createElement("div", {
-    className: "shrink-0 mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-slate-500 dark:text-slate-400",
-    "aria-label": "\uCE98\uB9B0\uB354 \uBC94\uB840"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "inline-flex items-center gap-1.5"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2 h-2 rounded-full bg-blue-500"
-  }), "Me"), /*#__PURE__*/React.createElement("span", {
-    className: "inline-flex items-center gap-1.5"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2 h-2 rounded-full bg-slate-400"
-  }), "\uB2E4\uB978 \uC608\uC57D"), /*#__PURE__*/React.createElement("span", {
-    className: "inline-flex items-center gap-1.5"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "w-2 h-2 rounded-full bg-red-400"
-  }), "\uC8FC\uB9D0\xB7\uACF5\uD734\uC77C"), /*#__PURE__*/React.createElement("span", {
-    className: "ml-auto hidden sm:inline text-slate-400 dark:text-slate-500"
-  }, "\uB0A0\uC9DC\uB97C \uC120\uD0DD\uD558\uBA74 \uC608\uC57D\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4")), /*#__PURE__*/React.createElement("div", {
-    className: "h-[620px] sm:h-full shrink-0 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-2 sm:p-4 relative transition-colors duration-200 overflow-hidden"
+    className: "flex-1 min-h-0 flex flex-col gap-2 sm:gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-h-0 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-0.5 sm:p-1.5 relative transition-colors duration-200 overflow-hidden"
   }, /*#__PURE__*/React.createElement("div", {
     ref: calendarContainerRef,
     id: "calendar",
     className: "w-full h-full"
-  })), loading && /*#__PURE__*/React.createElement("div", {
-    className: "fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999]"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-white/95 dark:bg-slate-800/95 px-8 py-6 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 flex flex-col items-center gap-3 select-none"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "typing-indicator scale-90"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "typing-circle"
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "typing-circle"
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "typing-circle"
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "typing-shadow"
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "typing-shadow"
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "typing-shadow"
-  })), /*#__PURE__*/React.createElement("span", {
-    className: "text-xs font-bold text-slate-700 dark:text-slate-200"
-  }, "\uCC98\uB9AC \uC911\uC785\uB2C8\uB2E4...")))), showMyBookings && /*#__PURE__*/React.createElement("div", {
+  })), showListModal && /*#__PURE__*/React.createElement("div", {
+    className: "sm:hidden flex-1 min-h-0 flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4"
+  }, /*#__PURE__*/React.createElement("h3", {
+    className: "shrink-0 font-bold mb-2 text-slate-900 dark:text-white text-sm"
+  }, selectedSlot?.startDate, " 예약 목록"), selectedDateReservations.length > 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-h-0 overflow-y-auto soft-scroll -mx-1"
+  }, selectedDateReservations.map(ev => {
+    const formatTime = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const formatDate = d => String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+    const isSameDay = ev.startObj.toDateString() === ev.endObj.toDateString();
+    const timeDisplay = isSameDay ? `${formatTime(ev.startObj)} ~ ${formatTime(ev.endObj)}` : `${formatDate(ev.startObj)} ${formatTime(ev.startObj)} ~ ${formatDate(ev.endObj)} ${formatTime(ev.endObj)}`;
+    return /*#__PURE__*/React.createElement("div", {
+      key: ev.id,
+      onClick: () => openBookingById(ev.id, ev.startObj, ev.endObj),
+      className: "px-1 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-sm flex flex-col gap-1 transition-colors"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold text-blue-700 dark:text-blue-400"
+    }, ev.title), /*#__PURE__*/React.createElement("span", {
+      className: "text-slate-500 dark:text-slate-400 text-xs"
+    }, timeDisplay));
+  })) : /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-500 dark:text-slate-400 text-sm text-center py-4"
+  }, "예약된 내역이 없습니다."), /*#__PURE__*/React.createElement("div", {
+    className: "shrink-0 flex gap-2 mt-4"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setShowListModal(false);
+      calendarInstanceRef.current?.unselect();
+    },
+    className: "flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 py-3 rounded-xl font-medium transition text-sm"
+  }, "Back"), !isPastSelection && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setSelectedEvent(null);
+      setShowListModal(false);
+      if (user.canAdminAuth) {
+        confirmNotice();
+      } else {
+        setShowNotice(true);
+      }
+    },
+    className: "flex-[2] bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl shadow-md font-medium transition text-sm"
+  }, "+ 신규 예약")))), loadingOverlay), showMyBookings && /*#__PURE__*/React.createElement("div", {
     role: "dialog",
     "aria-modal": "true",
     "aria-labelledby": "my-bookings-title",
@@ -2583,7 +3349,7 @@ function App() {
     onClick: () => setShowMyBookings(false),
     className: "w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 text-xl"
   }, "\xD7")), /*#__PURE__*/React.createElement("div", {
-    className: "max-h-[60vh] overflow-y-auto"
+    className: "max-h-[60vh] overflow-y-auto soft-scroll"
   }, myBookings.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "py-14 text-center"
   }, /*#__PURE__*/React.createElement("div", {
@@ -2616,48 +3382,7 @@ function App() {
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowMyBookings(false),
     className: "w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-sm font-medium text-slate-600 dark:text-slate-200"
-  }, "\uB2EB\uAE30")))), showListModal && /*#__PURE__*/React.createElement("div", {
-    role: "dialog",
-    "aria-modal": "true",
-    "aria-labelledby": "date-bookings-title",
-    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700"
-  }, /*#__PURE__*/React.createElement("h3", {
-    id: "date-bookings-title",
-    className: "font-bold mb-4 text-slate-900 dark:text-white"
-  }, selectedSlot?.startDate, " \uC608\uC57D \uBAA9\uB85D"), selectedDateReservations.length > 0 ? selectedDateReservations.map(ev => {
-    const formatTime = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    const formatDate = d => String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
-    const isSameDay = ev.startObj.toDateString() === ev.endObj.toDateString();
-    const timeDisplay = isSameDay ? `${formatTime(ev.startObj)} ~ ${formatTime(ev.endObj)}` : `${formatDate(ev.startObj)} ${formatTime(ev.startObj)} ~ ${formatDate(ev.endObj)} ${formatTime(ev.endObj)}`;
-    return /*#__PURE__*/React.createElement("div", {
-      key: ev.id,
-      onClick: () => openBookingById(ev.id, ev.startObj, ev.endObj),
-      className: "p-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer text-sm flex flex-col gap-1 transition-colors"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "font-semibold text-blue-700 dark:text-blue-400"
-    }, ev.title), /*#__PURE__*/React.createElement("span", {
-      className: "text-slate-500 dark:text-slate-400 text-xs"
-    }, timeDisplay));
-  }) : /*#__PURE__*/React.createElement("p", {
-    className: "text-slate-500 dark:text-slate-400 text-sm text-center py-4"
-  }, "\uC608\uC57D\uB41C \uB0B4\uC5ED\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."), /*#__PURE__*/React.createElement("div", {
-    className: "flex gap-2 mt-4"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setShowListModal(false);
-      calendarInstanceRef.current?.unselect();
-    },
-    className: "flex-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 py-3 rounded-xl font-medium transition text-sm"
-  }, "Back"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setSelectedEvent(null);
-      setShowListModal(false);
-      setShowNotice(true);
-    },
-    className: "flex-[2] bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl shadow-md font-medium transition text-sm"
-  }, "+ \uC2E0\uADDC \uC608\uC57D")))), showNotice && /*#__PURE__*/React.createElement("div", {
+  }, "\uB2EB\uAE30")))), showNotice && /*#__PURE__*/React.createElement("div", {
     role: "dialog",
     "aria-modal": "true",
     "aria-labelledby": "notice-title",
@@ -2694,9 +3419,12 @@ function App() {
     role: "dialog",
     "aria-modal": "true",
     "aria-labelledby": "booking-form-title",
-    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
+    // ⚡ 바깥 오버레이는 스크롤시키지 않고(items-center + overflow-y-auto는 내용이 화면보다 길면 위쪽이
+    // 잘려 스크롤로도 올라갈 수 없는 브라우저 공통 버그가 있다), 창 자체를 화면 높이(max-h-full)로
+    // 제한한 뒤 창 안에서 스크롤시킨다. 어떤 화면 크기에서도 창이 화면 안에 들어오고 위·아래가 잘리지 않는다.
+    className: "fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-hidden"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 my-4 relative"
+    className: "bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full max-h-full overflow-y-auto soft-scroll overscroll-contain shadow-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 relative"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex justify-between items-center mb-5"
   }, /*#__PURE__*/React.createElement("h3", {
@@ -2716,15 +3444,14 @@ function App() {
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
   }, "\uB300\uC5EC \uBD80\uC11C"), /*#__PURE__*/React.createElement("select", {
-    autoFocus: !formData.id,
     disabled: !hasPermission,
     value: deptSelect,
     onChange: e => setDeptSelect(e.target.value),
-    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+    className: (deptSelect === '선택' && hasPermission ? "border-blue-400 dark:border-blue-500 ring-2 ring-blue-500/20 font-semibold " : "border-slate-200 dark:border-slate-600 ") + "w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
   }, /*#__PURE__*/React.createElement("option", {
     value: "\uC120\uD0DD",
     disabled: true
-  }, "\uC120\uD0DD"), DEPARTMENTS.map(dept => /*#__PURE__*/React.createElement("option", {
+  }, "\uBD80\uC11C\uB97C \uC120\uD0DD\uD574\uC8FC\uC138\uC694 \u25BE"), DEPARTMENTS.map(dept => /*#__PURE__*/React.createElement("option", {
     key: dept,
     value: dept
   }, dept)), /*#__PURE__*/React.createElement("option", {
@@ -2804,20 +3531,25 @@ function App() {
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
   }, "\uB300\uC5EC \uC2DC\uC791\uC77C \uBC0F \uC2DC\uAC04"), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)] gap-2"
-  }, /*#__PURE__*/React.createElement("input", {
+    className: "grid grid-cols-[minmax(0,1fr)_minmax(0,4.5rem)] gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative flex items-center justify-center min-w-0 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-[13px] sm:text-sm focus-within:border-blue-600 dark:focus-within:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "pointer-events-none whitespace-nowrap"
+  }, (d => d ? d.replace(/-/g, '. ') + '. (' + ['일', '월', '화', '수', '목', '금', '토'][new Date(d + 'T00:00:00').getDay()] + ')' : '')(formData.startDate)), /*#__PURE__*/React.createElement("input", {
     type: "date",
     disabled: !hasPermission,
     required: true,
     value: formData.startDate,
     onChange: e => handleStartDateChange(e.target.value),
-    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
-  }), /*#__PURE__*/React.createElement("select", {
+    onClick: e => { try { e.currentTarget.showPicker && e.currentTarget.showPicker(); } catch (_) {} },
+    className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default"
+  })), /*#__PURE__*/React.createElement("select", {
     disabled: !hasPermission,
     required: true,
     value: formData.startTimePart,
     onChange: e => handleStartTimeChange(e.target.value),
-    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+    className: "w-full min-w-0 px-1 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-[13px] sm:text-sm text-center focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
   }, /*#__PURE__*/React.createElement("option", {
     value: "",
     disabled: true
@@ -2827,18 +3559,23 @@ function App() {
   }, time))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
   }, "\uBC18\uB0A9 \uC608\uC815\uC77C \uBC0F \uC2DC\uAC04"), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-[minmax(0,1fr)_minmax(0,7rem)] gap-2"
-  }, /*#__PURE__*/React.createElement("input", {
+    className: "grid grid-cols-[minmax(0,1fr)_minmax(0,4.5rem)] gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative flex items-center justify-center min-w-0 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-[13px] sm:text-sm focus-within:border-blue-600 dark:focus-within:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "pointer-events-none whitespace-nowrap"
+  }, (d => d ? d.replace(/-/g, '. ') + '. (' + ['일', '월', '화', '수', '목', '금', '토'][new Date(d + 'T00:00:00').getDay()] + ')' : '')(formData.endDate)), /*#__PURE__*/React.createElement("input", {
     type: "date",
     disabled: !hasPermission,
     required: true,
     value: formData.endDate,
+    onClick: e => { try { e.currentTarget.showPicker && e.currentTarget.showPicker(); } catch (_) {} },
     onChange: e => setFormData({
       ...formData,
       endDate: e.target.value
     }),
-    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 disabled:bg-slate-50 dark:disabled:bg-slate-800/50 dark:disabled:text-slate-500 transition-colors"
-  }), /*#__PURE__*/React.createElement("select", {
+    className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default"
+  })), /*#__PURE__*/React.createElement("select", {
     disabled: !hasPermission,
     required: true,
     value: formData.endTimePart,
@@ -2846,7 +3583,7 @@ function App() {
       ...formData,
       endTimePart: e.target.value
     }),
-    className: "w-full min-w-0 px-2 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition-colors"
+    className: "w-full min-w-0 px-1 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-[13px] sm:text-sm text-center focus:outline-none focus:border-blue-600 dark:focus:border-blue-500 transition-colors"
   }, /*#__PURE__*/React.createElement("option", {
     value: "",
     disabled: true
@@ -3008,7 +3745,7 @@ function App() {
     id: "instruction-title",
     className: "text-lg font-bold text-slate-900 dark:text-white mb-4"
   }, "\uBC95\uC778\uCE74\uB4DC \uC608\uC57D \uC2DC\uC2A4\uD15C \uC774\uC6A9 \uC548\uB0B4"), /*#__PURE__*/React.createElement("div", {
-    className: "bg-slate-50 dark:bg-slate-900 rounded-xl p-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 space-y-4 max-h-[60vh] overflow-y-auto"
+    className: "bg-slate-50 dark:bg-slate-900 rounded-xl p-4 text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 space-y-4 max-h-[60vh] overflow-y-auto soft-scroll"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     className: "font-bold text-blue-600 dark:text-blue-400 mb-1"
   }, "[\uC608\uC57D \uBC0F \uC774\uC6A9]"), /*#__PURE__*/React.createElement("p", {
@@ -3106,7 +3843,11 @@ function App() {
     className: "grid grid-cols-2 gap-3 mb-5"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
-  }, "\uC2DC\uC791\uC77C"), /*#__PURE__*/React.createElement("input", {
+  }, "\uC2DC\uC791\uC77C"), /*#__PURE__*/React.createElement("div", {
+    className: "relative flex items-center w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus-within:border-blue-600"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "pointer-events-none whitespace-nowrap"
+  }, (d => d ? d.replace(/-/g, '. ') + '. (' + ['일', '월', '화', '수', '목', '금', '토'][new Date(d + 'T00:00:00').getDay()] + ')' : '날짜 선택')(unavailablePeriodDraft.startDate)), /*#__PURE__*/React.createElement("input", {
     type: "date",
     value: unavailablePeriodDraft.startDate,
     onChange: e => setUnavailablePeriodDraft(prev => ({
@@ -3114,10 +3855,15 @@ function App() {
       startDate: e.target.value,
       endDate: prev.endDate && prev.endDate < e.target.value ? e.target.value : prev.endDate
     })),
-    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600"
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    onClick: e => { try { e.currentTarget.showPicker && e.currentTarget.showPicker(); } catch (_) {} },
+    className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     className: "block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1"
-  }, "\uC885\uB8CC\uC77C"), /*#__PURE__*/React.createElement("input", {
+  }, "\uC885\uB8CC\uC77C"), /*#__PURE__*/React.createElement("div", {
+    className: "relative flex items-center w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus-within:border-blue-600"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "pointer-events-none whitespace-nowrap"
+  }, (d => d ? d.replace(/-/g, '. ') + '. (' + ['일', '월', '화', '수', '목', '금', '토'][new Date(d + 'T00:00:00').getDay()] + ')' : '날짜 선택')(unavailablePeriodDraft.endDate)), /*#__PURE__*/React.createElement("input", {
     type: "date",
     value: unavailablePeriodDraft.endDate,
     min: unavailablePeriodDraft.startDate || undefined,
@@ -3125,8 +3871,9 @@ function App() {
       ...prev,
       endDate: e.target.value
     })),
-    className: "w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-blue-600"
-  }))), /*#__PURE__*/React.createElement("div", {
+    onClick: e => { try { e.currentTarget.showPicker && e.currentTarget.showPicker(); } catch (_) {} },
+    className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+  })))), /*#__PURE__*/React.createElement("div", {
     className: "flex gap-2"
   }, /*#__PURE__*/React.createElement("button", {
     type: "button",
@@ -3181,20 +3928,21 @@ function App() {
   }, feedbackDialog.kind === 'confirm' ? '확인' : feedbackDialog.kind === 'prompt' ? '인증하기' : '확인')))), toast && /*#__PURE__*/React.createElement("div", {
     role: "status",
     "aria-live": "polite",
-    className: "fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-[99999]"
+    className: "fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-[99999]"
   }, /*#__PURE__*/React.createElement("div", {
     className: `flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl border text-sm font-semibold ${toast.type === 'error' ? 'bg-red-600 border-red-500 text-white' : toast.type === 'warning' ? 'bg-amber-500 border-amber-400 text-white' : 'bg-slate-900 dark:bg-white border-slate-800 dark:border-white text-white dark:text-slate-900'}`
   }, /*#__PURE__*/React.createElement("span", null, toast.type === 'error' ? '✕' : toast.type === 'warning' ? '!' : '✓'), toast.message)), /*#__PURE__*/React.createElement("div", {
-    className: "sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-200 dark:border-slate-700 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+    className: "sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur border-t border-slate-200 dark:border-slate-700 px-3 pt-0.5 pb-[max(0.25rem,env(safe-area-inset-bottom))]"
   }, /*#__PURE__*/React.createElement("div", {
     className: "grid grid-cols-3 gap-1"
   }, /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uB2EC\uB825 \uBCF4\uAE30",
     onClick: () => {
+      setShowListModal(false);
       if (!calendarInstanceRef.current) return;
-      calendarInstanceRef.current.changeView('dayGridMonth');
+      calendarInstanceRef.current.changeView(window.innerWidth >= 640 ? 'dayGridContinuous' : 'dayGridMonth');
     },
-    className: "flex flex-col items-center justify-center gap-1 py-1 text-slate-500 dark:text-slate-300"
+    className: "flex flex-col items-center justify-center gap-0 py-0.5 text-slate-500 dark:text-slate-300"
   }, /*#__PURE__*/React.createElement("svg", {
     className: "w-5 h-5",
     viewBox: "0 0 24 24",
@@ -3214,19 +3962,23 @@ function App() {
   }, "\uB2EC\uB825")), /*#__PURE__*/React.createElement("button", {
     "aria-label": "\uC624\uB298 \uBCF4\uAE30",
     onClick: () => {
+      setShowListModal(false);
       if (!calendarInstanceRef.current) return;
       calendarInstanceRef.current.today();
       calendarInstanceRef.current.changeView('timeGridDay');
     },
-    className: "flex flex-col items-center justify-center gap-1 py-1 text-blue-600 dark:text-blue-400"
+    className: "flex flex-col items-center justify-center gap-0 py-0.5 text-blue-600 dark:text-blue-400"
   }, /*#__PURE__*/React.createElement("div", {
     className: "w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-[10px] font-bold"
   }, currentTime.getDate()), /*#__PURE__*/React.createElement("span", {
     className: "text-[10px] font-semibold"
   }, "\uC624\uB298")), /*#__PURE__*/React.createElement("button", {
     "aria-label": "Me \uC608\uC57D \uBCF4\uAE30",
-    onClick: () => setShowMyBookings(true),
-    className: "relative flex flex-col items-center justify-center gap-1 py-1 text-slate-500 dark:text-slate-300"
+    onClick: () => {
+      setShowListModal(false);
+      setShowMyBookings(true);
+    },
+    className: "relative flex flex-col items-center justify-center gap-0 py-0.5 text-slate-500 dark:text-slate-300"
   }, /*#__PURE__*/React.createElement("svg", {
     className: "w-5 h-5",
     viewBox: "0 0 24 24",
@@ -3248,7 +4000,7 @@ function App() {
   }, myBookings.length), /*#__PURE__*/React.createElement("span", {
     className: "text-[10px] font-medium"
   }, "Me")))), /*#__PURE__*/React.createElement("div", {
-    className: "absolute bottom-14 sm:bottom-3 right-3 sm:right-4 z-[40] text-right pointer-events-none opacity-80 select-none"
+    className: "hidden sm:block absolute sm:bottom-1 right-3 sm:right-4 z-[40] text-right pointer-events-none opacity-80 select-none"
   }, /*#__PURE__*/React.createElement("p", {
     className: "text-[10px] font-medium text-slate-400 dark:text-slate-500"
   }, "\xA9 vico.yj All rights reserved. ", /*#__PURE__*/React.createElement("span", {
